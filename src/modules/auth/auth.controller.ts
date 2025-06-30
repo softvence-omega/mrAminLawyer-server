@@ -1,22 +1,20 @@
 import { Types } from 'mongoose';
 import catchAsync from '../../util/catchAsync';
-import idConverter from '../../util/idConvirter';
+import idConverter from '../../util/idConverter';
 import authServices from './auth.services';
 
-
 const logIn = catchAsync(async (req, res) => {
-  const { email, password,method } = req.body;
-  const result = await authServices.logIn(email, password,method,);
-  const { approvalToken, refreshToken, updatedUser,message} = result;
+  const { email, password, method } = req.body;
+  const result = await authServices.logIn(email, password, method);
+  const { approvalToken, refreshToken, updatedUser, message } = result;
 
   res.status(200).json({
     message: 'Log In Successful',
-    access_Message:message,
+    access_Message: message,
     approvalToken: approvalToken,
     refreshToken: refreshToken,
     user: updatedUser,
-    
-  });     
+  });
 });
 
 const logOut = catchAsync(async (req, res) => {
@@ -26,7 +24,7 @@ const logOut = catchAsync(async (req, res) => {
     throw Error('token is missing');
   }
 
-  const result = await authServices.logOut(userId);
+  await authServices.logOut(userId);
   res.status(200).json({
     message: 'Log OUT Successful',
   });
@@ -60,26 +58,19 @@ const refreshToken = catchAsync(async (req, res) => {
 });
 
 const forgetPassword = catchAsync(async (req, res) => {
-
   const email = req.body?.email;
   const result = await authServices.forgetPassword(email);
   res.status(200).json({
     success: true,
-    message: 'reset password token genarated check your email',
+    message: 'reset password token generated check your email',
     body: result,
   });
-
 });
 
 const resetPassword = catchAsync(async (req, res) => {
-  const {newPassword,token } = req.body;
+  const { newPassword, token } = req.body;
 
-
-
-  const result = await authServices.resetPassword(
-    token,
-    newPassword,
-  );
+  const result = await authServices.resetPassword(token, newPassword);
 
   res.status(200).json({
     success: true,
@@ -89,7 +80,7 @@ const resetPassword = catchAsync(async (req, res) => {
 });
 
 const collectProfileData = catchAsync(async (req, res) => {
-  const user = req.user 
+  const user = req.user;
   const result = await authServices.collectProfileData(user.id);
   res.status(200).json({
     success: true,
@@ -98,19 +89,23 @@ const collectProfileData = catchAsync(async (req, res) => {
   });
 });
 
-const otpcrossCheck = catchAsync(async (req, res) => {
-  const { token, recivedOTP, passwordChange } = req.body;
+const otpCrossCheck = catchAsync(async (req, res) => {
+  const { token, receivedOTP, passwordChange } = req.body;
 
   // Validate required inputs
-  if (!token || !recivedOTP) {
+  if (!token || !receivedOTP) {
     return res.status(400).json({
       success: false,
       message: 'Token and OTP are required',
     });
   }
 
-  // Call authServices.otpcrossCheck with passwordChange (true or undefined)
-  const result = await authServices.otpcrossCheck(token, recivedOTP, passwordChange === true ? true : undefined);
+  // Call authServices.otpCrossCheck with passwordChange (true or undefined)
+  const result = await authServices.otpCrossCheck(
+    token,
+    receivedOTP,
+    passwordChange === true ? true : undefined,
+  );
 
   // Validate result
   if (!result || !result.user) {
@@ -123,44 +118,43 @@ const otpcrossCheck = catchAsync(async (req, res) => {
   // Send success response
   res.status(200).json({
     success: true,
-    message: passwordChange ? 'Now you can set a new password' : 'OTP verified successfully, allowed to log in',
+    message: passwordChange
+      ? 'Now you can set a new password'
+      : 'OTP verified successfully, allowed to log in',
     body: result.user,
   });
 });
 
-const send_OTP = catchAsync(async(req, res) =>{
-const user_id = req.user.id as string
-const converted_id = idConverter(user_id)
+const send_OTP = catchAsync(async (req, res) => {
+  const user_id = req.user.id as string;
+  const converted_id = idConverter(user_id);
 
-console.log("yooooo",converted_id)
+  console.log('yooooo', converted_id);
 
-const result =await authServices.send_OTP(converted_id as Types.ObjectId)
-res.status(200).json({
-  success: true,
-  message: 'OTP verified successfully,allow to log in',
-  body: result,
+  const result = await authServices.send_OTP(converted_id as Types.ObjectId);
+  res.status(200).json({
+    success: true,
+    message: 'OTP verified successfully,allow to log in',
+    body: result,
+  });
 });
 
-})
+const reSend_OTP = catchAsync(async (req, res) => {
+  const resendOTPToken = req.body.resendOTPToken as string;
 
+  console.log('yooooo', reSend_OTP);
 
-const reSend_OTP = catchAsync(async(req, res) =>{
-const resendOTPToken = req.body.resendOTPtoken as string
-
-console.log("yooooo",reSend_OTP)
-
-const result =await authServices.reSend_OTP(resendOTPToken)
-res.status(200).json({
-  success: true,
-  message: 'OTP is sent again !',
-  body: result,
+  const result = await authServices.reSend_OTP(resendOTPToken);
+  res.status(200).json({
+    success: true,
+    message: 'OTP is sent again !',
+    body: result,
+  });
 });
-
-})
 
 const authController = {
   logIn,
-  otpcrossCheck,
+  otpCrossCheck,
   logOut,
   changePassword,
   refreshToken,
@@ -168,6 +162,6 @@ const authController = {
   resetPassword,
   collectProfileData,
   send_OTP,
-  reSend_OTP
+  reSend_OTP,
 };
 export default authController;

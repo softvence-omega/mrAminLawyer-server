@@ -1,7 +1,7 @@
 import { Types } from 'mongoose';
 import catchAsync from '../../util/catchAsync';
-import golbalRespnseHandler from '../../util/globalResponseHandeler';
-import idConverter from '../../util/idConvirter';
+import globalResponseHandler from '../../util/globalResponseHandler';
+import idConverter from '../../util/idConverter';
 import userServices from './user.service';
 
 const createUser = catchAsync(async (req, res): Promise<void> => {
@@ -18,7 +18,7 @@ const createUser = catchAsync(async (req, res): Promise<void> => {
   let parsedData: any;
   try {
     parsedData = JSON.parse(data); // Parse JSON string from req.body.data
-  } catch (error:any) {
+  } catch (error: any) {
     throw new Error('Invalid JSON data provided');
   }
 
@@ -31,28 +31,27 @@ const createUser = catchAsync(async (req, res): Promise<void> => {
   });
 });
 
-const setFCMToken = catchAsync(async(req,res)=>{
+const setFCMToken = catchAsync(async (req, res) => {
   const user_id = req.user.id; // Assuming req.user.id is already an ObjectId from your auth middleware
   const fcmToken = req.body.fcmToken;
 
   if (!fcmToken) {
-throw new Error("fcm token is requered")
+    throw new Error('fcm token is required');
   }
 
   const result = await userServices.setFCMToken(user_id, fcmToken);
 
-  golbalRespnseHandler(res, {
+  globalResponseHandler(res, {
     statusCode: 200,
     success: true,
     message: 'FCM token set successfully',
     data: result,
   });
-}
-);
+});
 
 const getAllUsers = catchAsync(async (req, res) => {
   const result = await userServices.getAllUsers();
-  golbalRespnseHandler(res, {
+  globalResponseHandler(res, {
     statusCode: 200,
     success: true,
     message: 'All users',
@@ -64,14 +63,13 @@ const getAllProfiles = catchAsync(async (req, res) => {
   // Call the user service method to get all profiles
   const result = await userServices.getAllProfiles();
 
-  golbalRespnseHandler(res, {
+  globalResponseHandler(res, {
     statusCode: 200,
     success: true,
-    message: "All profiles retrieved successfully",
+    message: 'All profiles retrieved successfully',
     data: result,
   });
 });
-
 
 // update profile controller
 const updateUserProfile = catchAsync(async (req, res) => {
@@ -83,10 +81,14 @@ const updateUserProfile = catchAsync(async (req, res) => {
   const imgFile = req.file; // Image file (if uploaded)
 
   // Call the service to update the profile, passing the imgFile (optional)
-  const updatedProfile = await userServices.updateUserProfile(user_id, profileData, imgFile);
+  const updatedProfile = await userServices.updateUserProfile(
+    user_id,
+    profileData,
+    imgFile,
+  );
 
   // Send the response with the updated profile data
-  golbalRespnseHandler(res, {
+  globalResponseHandler(res, {
     statusCode: 200,
     success: true,
     message: 'Profile updated successfully',
@@ -94,14 +96,12 @@ const updateUserProfile = catchAsync(async (req, res) => {
   });
 });
 
-
-
 const updateProfileData = catchAsync(async (req, res) => {
-
-  const user_id = typeof req.user.id === 'string' ? idConverter(req.user.id) : req.user.id;
-  const payload = req.body
-  const result= await userServices.updateProfileData(user_id,payload)
-  golbalRespnseHandler(res, {
+  const user_id =
+    typeof req.user.id === 'string' ? idConverter(req.user.id) : req.user.id;
+  const payload = req.body;
+  const result = await userServices.updateProfileData(user_id, payload);
+  globalResponseHandler(res, {
     statusCode: 200,
     success: true,
     message: 'profile updated',
@@ -110,14 +110,14 @@ const updateProfileData = catchAsync(async (req, res) => {
 });
 
 const deleteSingleUser = catchAsync(async (req, res) => {
-  const user_id= req.query.user_id as string;
+  const user_id = req.query.user_id as string;
   const userIdConverted = idConverter(user_id);
-  console.log(user_id,userIdConverted)
-  if(!userIdConverted){
-    throw new Error ("user id conversiopn failed")
+  console.log(user_id, userIdConverted);
+  if (!userIdConverted) {
+    throw new Error('user id conversion failed');
   }
-  const result =await userServices.deleteSingleUser(userIdConverted);
-  golbalRespnseHandler(res, {
+  const result = await userServices.deleteSingleUser(userIdConverted);
+  globalResponseHandler(res, {
     statusCode: 200,
     success: true,
     message: 'user deleted',
@@ -125,20 +125,19 @@ const deleteSingleUser = catchAsync(async (req, res) => {
   });
 });
 
-
-const selfDistuct = catchAsync(async (req, res) => {
-  const user_id= req.user.id;
-  const userIdConverted = idConverter(user_id)
-  if (!userIdConverted){
-    throw new Error("user id conversion failed")
+const selfDestruct = catchAsync(async (req, res) => {
+  const user_id = req.user.id;
+  const userIdConverted = idConverter(user_id);
+  if (!userIdConverted) {
+    throw new Error('user id conversion failed');
   }
 
-  const result = await userServices.selfDistuct(userIdConverted)
-  
-  golbalRespnseHandler(res, {
+  const result = await userServices.selfDestruct(userIdConverted);
+
+  globalResponseHandler(res, {
     statusCode: 200,
     success: true,
-    message: 'your account deletation successfull',
+    message: 'your account deletion successful',
     data: result,
   });
 });
@@ -149,57 +148,59 @@ const uploadOrChangeImg = catchAsync(async (req, res) => {
   const imgFile = req.file;
 
   if (!user_id || !imgFile) {
-    throw new Error("User ID and image file are required.");
+    throw new Error('User ID and image file are required.');
   }
 
   // Ensure `idConverter` returns only the ObjectId
   const userIdConverted = idConverter(user_id);
   if (!(userIdConverted instanceof Types.ObjectId)) {
-    throw new Error("User ID conversion failed");
+    throw new Error('User ID conversion failed');
   }
 
   // Call the service function to handle the upload
-  const result = await userServices.uploadOrChangeImg(userIdConverted, imgFile as Express.Multer.File);
+  const result = await userServices.uploadOrChangeImg(
+    userIdConverted,
+    imgFile as Express.Multer.File,
+  );
 
   // Send response
-  golbalRespnseHandler(res, {
+  globalResponseHandler(res, {
     statusCode: 200,
     success: true,
-    message: `Your profile picture has been ${actionType || "updated"}`,
+    message: `Your profile picture has been ${actionType || 'updated'}`,
     data: result,
   });
 });
 
-const getProfile= catchAsync(async(req,res)=>{
-  const user_id = req.user.id
-  const converted_user_id= idConverter(user_id)
-  if(!converted_user_id)
-  {
-    throw Error("id conversation failed")
+const getProfile = catchAsync(async (req, res) => {
+  const user_id = req.user.id;
+  const converted_user_id = idConverter(user_id);
+  if (!converted_user_id) {
+    throw Error('id conversation failed');
   }
-  const result = await userServices.getProfile(converted_user_id)
+  const result = await userServices.getProfile(converted_user_id);
 
-  golbalRespnseHandler(res, {
+  globalResponseHandler(res, {
     statusCode: 200,
     success: true,
-    message:"your position retrived",
+    message: 'your position retrieved successfully',
     data: result,
   });
-})
+});
 
 const updateUserByAdmin = catchAsync(async (req, res) => {
   const user_id = req.params.id;
   const convertedUserId = idConverter(user_id);
 
   if (!convertedUserId) {
-    throw new Error("User ID conversion failed");
+    throw new Error('User ID conversion failed');
   }
 
   const payload = req.body;
 
   const result = await userServices.updateUserByAdmin(convertedUserId, payload);
 
-  golbalRespnseHandler(res, {
+  globalResponseHandler(res, {
     statusCode: 200,
     success: true,
     message: 'User updated successfully',
@@ -217,7 +218,7 @@ const getUserFullDetails = catchAsync(async (req, res) => {
 
   const result = await userServices.getUserFullDetails(convertedUserId);
 
-  golbalRespnseHandler(res, {
+  globalResponseHandler(res, {
     statusCode: 200,
     success: true,
     message: 'User full details retrieved successfully',
@@ -225,69 +226,19 @@ const getUserFullDetails = catchAsync(async (req, res) => {
   });
 });
 
-const createWorkoutSetup= catchAsync(async(req,res)=>{
-  const user_id = req.user.id
-  const convertedUserId  = idConverter(user_id)
-
-  if(!convertedUserId){
-    throw new Error ("user id convirsation failed")
-  }
-  const result = await userServices.createWorkoutSetup(convertedUserId,req.body)
-  res.status(200).json({
-    status: 'success',
-    message: 'Workout setup created successfully',
-    data: result,
-  })
-})
-
-const updateWorkoutSetup= catchAsync(async(req,res)=>{
-  const user_id = req.user.id
-  const convertedUserId  = idConverter(user_id)
-
-  if(!convertedUserId){
-    throw new Error ("user id convirsation failed")
-  }
-  const result = await userServices.updateWorkoutSetup(convertedUserId,req.body)
-  res.status(200).json({
-    status: 'success',
-    message: 'Workout setup updated successfully',
-    data: result,
-  })
-})
-
-const getWorkoutSetup= catchAsync(async(req,res)=>{
-  const user_id = req.user.id
-  const convertedUserId  = idConverter(user_id)
-
-  if(!convertedUserId){
-    throw new Error ("user id convirsation failed")
-  }
-  const result = await userServices.getWorkoutSetup(convertedUserId)
-  res.status(200).json({
-    status: 'success',
-    message: 'Workout setup updated successfully',
-    data: result,
-  })
-})
-
-
 const userController = {
   createUser,
   getAllUsers,
   updateProfileData,
   deleteSingleUser,
-  selfDistuct,
+  selfDestruct,
   uploadOrChangeImg,
   getProfile,
   updateUserProfile,
   getAllProfiles,
   updateUserByAdmin,
   getUserFullDetails,
-  setFCMToken,createWorkoutSetup,updateWorkoutSetup,getWorkoutSetup
+  setFCMToken,
 };
-
-
-
-
 
 export default userController;

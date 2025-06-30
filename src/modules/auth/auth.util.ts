@@ -31,7 +31,7 @@ const decodeAuthorizationToken = (token: string) =>
 const decodeRefreshToken = (token: string) =>
   decodeToken(token, config.jwt_refresh_Token_secret);
 
-const sendOTPviaEmail = async (payload: Partial<TUser>) => {
+const sendOTPViaEmail = async (payload: Partial<TUser>) => {
   console.log('from send otp via email', payload);
 
   if (!payload.email || !payload.role) {
@@ -47,7 +47,7 @@ const sendOTPviaEmail = async (payload: Partial<TUser>) => {
       role: payload.role,
     },
     config.jwt_token_secret,
-    config.OTP_TOKEN_DURATION,
+    config.otp_token_duration,
   );
 
   const html = `
@@ -77,7 +77,7 @@ const sendOTPviaEmail = async (payload: Partial<TUser>) => {
   );
 
   if (!updateUserWithOtp) {
-    throw Error('faild to update user with OTP');
+    throw Error('failed to update user with OTP');
   }
   //   now send mail to the user with otp
   const sendEmailWithOtp = await sendEmail(
@@ -101,7 +101,7 @@ const authUtil = {
   createToken,
   decodeAuthorizationToken,
   decodeRefreshToken,
-  sendOTPviaEmail,
+  sendOTPViaEmail,
   decodeToken,
 };
 

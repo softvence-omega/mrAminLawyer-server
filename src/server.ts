@@ -15,7 +15,7 @@ async function main() {
       console.log(`Mr. Amin Lawyer server app listening on port ${config.port}`);
     });
   } 
-  catch (err:any) {
+  catch (err : any) {
     throw Error('something went wrong in server or mongoose connection');
   }
 }

@@ -1,12 +1,18 @@
 import mongoose, { ClientSession, Types } from 'mongoose';
-import { TProfile, TUser, TWorkoutASetup } from './user.interface';
-import { ProfileModel, UserModel, WorkoutASetupModel } from './user.model';
-import { deleteFile, uploadImgToCloudinary } from '../../util/uploadImgToCloudinary';
-import authUtil from '../auth/auth.utill';
-import { userRole } from '../../constents';
+import { TProfile, TUser } from './user.interface';
+import { ProfileModel, UserModel } from './user.model';
+import {
+  deleteFile,
+  uploadImgToCloudinary,
+} from '../../util/uploadImgToCloudinary';
+import authUtil from '../auth/auth.util';
+import { userRole } from '../../constants';
 
-
-const createUser = async (payload: Partial<TUser>, file?: any, method?: string) => {
+const createUser = async (
+  payload: Partial<TUser>,
+  file?: any,
+  method?: string,
+) => {
   // Validate password match
   if (payload.password !== payload.confirmPassword) {
     throw new Error('Password and confirm password do not match.');
@@ -19,7 +25,9 @@ const createUser = async (payload: Partial<TUser>, file?: any, method?: string) 
 
   // Check for existing user
   console.log('Checking if user exists');
-  const existingUser = await UserModel.findOne({ email: payload.email }).select('+password');
+  const existingUser = await UserModel.findOne({ email: payload.email }).select(
+    '+password',
+  );
   if (existingUser && !existingUser.isDeleted) {
     throw new Error('A user with this email already exists and is active.');
   }
@@ -37,7 +45,10 @@ const createUser = async (payload: Partial<TUser>, file?: any, method?: string) 
 
   // Check MongoDB connection state
   if (mongoose.connection.readyState !== 1) {
-    console.error('MongoDB connection not ready, state:', mongoose.connection.readyState);
+    console.error(
+      'MongoDB connection not ready, state:',
+      mongoose.connection.readyState,
+    );
     throw new Error('MongoDB connection is not ready.');
   }
 
@@ -102,14 +113,16 @@ const createUser = async (payload: Partial<TUser>, file?: any, method?: string) 
     console.log('Transaction committed');
 
     // Fetch the user after transaction
-    const fetchedUser = await UserModel.findOne({ email: userData.email }).select('-password');
+    const fetchedUser = await UserModel.findOne({
+      email: userData.email,
+    }).select('-password');
     if (!fetchedUser) {
       throw new Error('User created but not found after transaction.');
     }
 
     // Send OTP
     console.log('Sending OTP via email');
-    const token = await authUtil.sendOTPviaEmail(fetchedUser);
+    const token = await authUtil.sendOTPViaEmail(fetchedUser);
 
     return {
       success: true,
@@ -130,13 +143,14 @@ const createUser = async (payload: Partial<TUser>, file?: any, method?: string) 
       }
     }
 
-    throw new Error(error.message || 'User creation failed due to an internal error.');
+    throw new Error(
+      error.message || 'User creation failed due to an internal error.',
+    );
   } finally {
     session.endSession();
     console.log('Session ended');
   }
 };
-
 
 const setFCMToken = async (user_id: Types.ObjectId, fcmToken: string) => {
   if (!fcmToken) {
@@ -157,7 +171,7 @@ const setFCMToken = async (user_id: Types.ObjectId, fcmToken: string) => {
 };
 
 const getAllUsers = async () => {
-  const result = await UserModel.find({isBlocked:false,isDeleted:false});
+  const result = await UserModel.find({ isBlocked: false, isDeleted: false });
   return result;
 };
 
@@ -274,7 +288,7 @@ const deleteSingleUser = async (user_id: Types.ObjectId) => {
   }
 };
 
-const selfDistuct = async (user_id: Types.ObjectId) => {
+const selfDestruct = async (user_id: Types.ObjectId) => {
   const result = deleteSingleUser(user_id);
   return result;
 };
@@ -313,7 +327,6 @@ const uploadOrChangeImg = async (
 const getProfile = async (user_id: Types.ObjectId) => {
   const profile = await ProfileModel.findOne({ user_id }).populate([
     { path: 'user_id', model: 'UserCollection' },
-    { path: 'workoutASetup', model: 'WorkoutASetup' },
   ]);
 
   if (!profile) {
@@ -358,223 +371,12 @@ const getUserFullDetails = async (userId: Types.ObjectId) => {
   };
 };
 
-const createWorkoutSetup = async (user_id: Types.ObjectId, payload: any) => {
-  // Validate inputs
-  if (!user_id) {
-    throw new Error('User ID is required.');
-  }
-
-  if (
-    !payload ||
-    !payload.goal ||
-    !payload.gender ||
-    !payload.weight ||
-    !payload.age ||
-    !payload.height ||
-    !payload.dietaryPreference ||
-    !payload.exercisePreference ||
-    !payload.calorieGoal ||
-    !payload.sleepQuality
-  ) {
-    throw new Error('All workout setup fields, including sleepQuality, are required.');
-  }
-
-  // Map sleepQuality string to full TSleepQuality object
-  let sleepQuality
-  switch (payload.sleepQuality) {
-    case 'excellent':
-      sleepQuality = { quality: 'excellent', lowerLimit: 8, upperLimit: 10 };
-      break;
-    case 'great':
-      sleepQuality = { quality: 'great', lowerLimit: 7, upperLimit: 8 };
-      break;
-    case 'normal':
-      sleepQuality = { quality: 'normal', lowerLimit: 5, upperLimit: 6 };
-      break;
-    case 'bad':
-      sleepQuality = { quality: 'bad', lowerLimit: 0, upperLimit: 4 };
-      break;
-    default:
-      throw new Error('Invalid sleep quality. Must be one of: excellent, great, normal, bad.');
-  }
-
-  // Check MongoDB connection state
-  if (mongoose.connection.readyState !== 1) {
-    throw new Error('MongoDB connection is not ready.');
-  }
-
-  const session = await WorkoutASetupModel.startSession();
-
-  try {
-    await session.startTransaction();
-    console.log('Transaction started for workout setup creation');
-
-    // Create a new workout setup
-    const workoutSetup = new WorkoutASetupModel({
-      user_id,
-      goal: payload.goal,
-      gender: payload.gender,
-      weight: payload.weight,
-      age: payload.age,
-      height: payload.height,
-      dietaryPreference: payload.dietaryPreference,
-      exercisePreference: payload.exercisePreference,
-      calorieGoal: payload.calorieGoal,
-      sleepQuality,
-    });
-
-    // Save the workout setup
-    const savedWorkoutSetup = await workoutSetup.save({ session });
-    console.log('Workout setup saved:', savedWorkoutSetup._id);
-
-    // Update the user's profile
-    const updatedProfile = await ProfileModel.findOneAndUpdate(
-      { user_id },
-      { workoutASetup: savedWorkoutSetup._id },
-      { new: true, session },
-    );
-
-    if (!updatedProfile) {
-      throw new Error('Profile not found or update failed.');
-    }
-
-    console.log('Profile updated with workout setup:', updatedProfile._id);
-
-    // Commit the transaction
-    await session.commitTransaction();
-    console.log('Transaction committed');
-
-    return {
-      success: true,
-      message: 'Workout setup created successfully.',
-      data: {
-        workoutSetup: savedWorkoutSetup,
-        profile: updatedProfile,
-      },
-    };
-  } catch (error: any) {
-    await session.abortTransaction();
-    console.error('Error creating workout setup:', error);
-    throw new Error(error.message || 'Failed to create workout setup due to an internal error.');
-  } finally {
-    session.endSession();
-    console.log('Session ended');
-  }
-};
-
-
-const updateWorkoutSetup = async (user_id:Types.ObjectId, payload:any) => {
-  // Validate inputs
-  if (!user_id) {
-    throw new Error('User ID is required.');
-  }
-
-  if (!payload || Object.keys(payload).length === 0) {
-    throw new Error('At least one field must be provided for update.');
-  }
-
-  // Map sleepQuality string to object if provided
-  const updatePayload = { ...payload };
-  if (payload.sleepQuality) {
-    switch (payload.sleepQuality) {
-      case 'excellent':
-        updatePayload.sleepQuality = { quality: 'excellent', lowerLimit: 8, upperLimit: 10 };
-        break;
-      case 'great':
-        updatePayload.sleepQuality = { quality: 'great', lowerLimit: 7, upperLimit: 8 };
-        break;
-      case 'normal':
-        updatePayload.sleepQuality = { quality: 'normal', lowerLimit: 5, upperLimit: 6 };
-        break;
-      case 'bad':
-        updatePayload.sleepQuality = { quality: 'bad', lowerLimit: 0, upperLimit: 4 };
-        break;
-      default:
-        throw new Error('Invalid sleep quality. Must be one of: excellent, great, normal, bad.');
-    }
-  }
-
-  const session = await mongoose.startSession();
-
-  try {
-    await session.startTransaction();
-    console.log('Transaction started for workout setup update');
-
-    // Check if workout setup exists
-    const workoutSetup = await WorkoutASetupModel.findOne({ user_id }).session(session);
-    if (!workoutSetup) {
-      throw new Error('No workout setup found for the provided user ID.');
-    }
-    console.log('Existing workout setup found:', workoutSetup._id);
-
-    // Update workout setup with all provided payload fields
-    const updatedWorkoutSetup = await WorkoutASetupModel.findOneAndUpdate(
-      { user_id },
-      { $set: updatePayload },
-      { new: true, session },
-    );
-    if (!updatedWorkoutSetup) {
-      throw new Error('Failed to update workout setup.');
-    }
-    console.log('Workout setup updated:', updatedWorkoutSetup._id);
-
-    // Find the user's profile
-    const profile = await ProfileModel.findOne({ user_id }).session(session);
-    if (!profile) {
-      throw new Error('Profile not found for the provided user ID.');
-    }
-    console.log('Profile found:', profile._id);
-
-    // Commit the transaction
-    console.log('Committing transaction');
-    await session.commitTransaction();
-    console.log('Transaction committed');
-
-    return {
-      success: true,
-      message: 'Workout setup updated successfully.',
-      data: {
-        workoutSetup: updatedWorkoutSetup,
-        profile: profile,
-      },
-    };
-  } catch (error:any) {
-    await session.abortTransaction();
-    console.error('Error in updateWorkoutSetup:', {
-      message: error.message,
-      stack: error.stack,
-      error,
-    });
-    throw new Error(error.message || 'Failed to update workout setup due to an internal error.');
-  } finally {
-    session.endSession();
-    console.log('Session ended');
-  }
-};
-
-const getWorkoutSetup = async(user_id:Types.ObjectId)=>{
-  // Validate user_id
-  if (!user_id) {
-    throw new Error('User ID is required.');
-  }
-
-  // Fetch workout setup for the given user_id
-  const workoutSetup = await WorkoutASetupModel.findOne({ user_id }).populate('user_id', 'name email');
-
-  if (!workoutSetup) {
-    throw new Error('No workout setup found for the provided user ID.');
-  }
-
-  return workoutSetup;
-};
-
-
 const userServices = {
   createUser,
   getAllUsers,
   updateProfileData,
   deleteSingleUser,
-  selfDistuct,
+  selfDestruct,
   uploadOrChangeImg,
   getProfile,
   updateUserProfile,
@@ -582,9 +384,6 @@ const userServices = {
   updateUserByAdmin,
   getUserFullDetails,
   setFCMToken,
-  createWorkoutSetup,
-  updateWorkoutSetup,
-  getWorkoutSetup
 };
 
 export default userServices;

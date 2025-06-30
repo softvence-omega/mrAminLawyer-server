@@ -27,7 +27,7 @@ app.use('/api/v1', Routes);
 // route not found
 app.use(routeNotFound);
 
-// global error handeller
+// global error handler
 app.use(globalErrorHandler);
 
 export default app;

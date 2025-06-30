@@ -3,7 +3,7 @@ import { ZodError } from 'zod';
 import reformZodError from '../error/zoodError';
 import mongoseErrorHandeller from '../error/mongooseErrorHandler';
 import dublicateErrorHandellerr from '../error/duplicateError';
-import { TErrorSource } from '../constents';
+import { TErrorSource } from '../constants';
 
 const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   // setting default value

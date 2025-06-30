@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
-import authUtill from '../modules/auth/auth.utill';
+import authUtil from '../modules/auth/auth.util';
 import catchAsync from '../util/catchAsync';
-import { TUserRole } from '../constents';
+import { TUserRole } from '../constants';
 import { UserModel } from '../modules/user/user.model';
-import idConverter from '../util/idConvirter';
+import idConverter from '../util/idConverter';
 
 type AuthOptions = {
   requestOTP?: boolean;
@@ -16,13 +16,13 @@ const auth = (roles: TUserRole[], options?: AuthOptions) => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const authorizationToken = req.headers.authorization;
 
-    console.log("yoo token",authorizationToken)
+    console.log('yoo token', authorizationToken);
 
     if (!authorizationToken) {
       throw new Error('Unauthorized: Missing Authorization Token');
     }
 
-    const decoded = authUtill.decodeAuthorizationToken(authorizationToken);
+    const decoded = authUtil.decodeAuthorizationToken(authorizationToken);
 
     if (!decoded || typeof decoded !== 'object') {
       throw new Error('Unauthorized: Invalid Token');
@@ -30,10 +30,12 @@ const auth = (roles: TUserRole[], options?: AuthOptions) => {
 
     const { id, role, iat, OTPVerified } = decoded as JwtPayload;
 
-    console.log("bla bla",id, role,iat,OTPVerified)
+    console.log('bla bla', id, role, iat, OTPVerified);
 
     if (!requestOTP && !OTPVerified) {
-      throw new Error('Unauthorized: Please verify your OTP to access this resource');
+      throw new Error(
+        'Unauthorized: Please verify your OTP to access this resource',
+      );
     }
 
     if (requestOTP && OTPVerified) {
@@ -65,6 +67,5 @@ const auth = (roles: TUserRole[], options?: AuthOptions) => {
     next();
   });
 };
-
 
 export default auth;

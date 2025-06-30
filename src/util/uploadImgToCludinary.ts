@@ -19,9 +19,9 @@ export const deleteFile = async (filePath: string) => {
 export const uploadImgToCloudinary = async (name: string, filePath: string) => {
   // Configuration for Cloudinary
   cloudinary.config({
-    cloud_name: config.CLOUDNAME,
-    api_key: config.APIkEY,
-    api_secret: config.APISECRET,
+    cloud_name: config.cloudinary_name,
+    api_key: config.cloudinary_api_key,
+    api_secret: config.cloudinary_api_secret,
   });
 
   try {
@@ -71,9 +71,9 @@ export const uploadMultipleImages = async (filePaths: string[]) => {
 // Function to upload a PDF to Cloudinary
 export const uploadPdfToCloudinary = async (name: string, filePath: string) => {
   cloudinary.config({
-    cloud_name: config.CLOUDNAME,
-    api_key: config.APIkEY,
-    api_secret: config.APISECRET,
+    cloud_name: config.cloudinary_name,
+    api_key: config.cloudinary_api_key,
+    api_secret: config.cloudinary_api_secret,
   });
 
   try {
