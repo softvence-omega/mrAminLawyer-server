@@ -5,135 +5,6 @@ import { deleteFile, uploadImgToCloudinary } from '../../util/uploadImgToCloudin
 import authUtil from '../auth/auth.utill';
 import { userRole } from '../../constents';
 
-// const createUser = async (payload: Partial<TUser>,file:any, method?: string) => {
-//   // Validate password match
-//   if (payload.password !== payload.confirmPassword) {
-//     return {
-//       success: false,
-//       message: 'Password and confirm password do not match.',
-//       data: { user: null, token: null },
-//     };
-//   }
-
-//   // Validate terms agreement
-//   if (!payload.agreedToTerms) {
-//     return {
-//       success: false,
-//       message: 'You must agree to the terms and conditions to register.',
-//       data: { user: null, token: null },
-//     };
-//   }
-
-//   // Check for existing user
-//   console.log('Checking if user exists');
-//   const existingUser = await UserModel.findOne({ email: payload.email }).select('+password');
-//   if (existingUser && !existingUser.isDeleted) {
-//     return {
-//       success: false,
-//       message: 'A user with this email already exists and is active.',
-//       data: { user: null, token: null },
-//     };
-//   }
-//   //upload imge to cloudinary from here
-
-
-//   // Create new payload with default role
-//   const userPayload = {
-//     ...payload,
-//     role: payload.role || userRole.user,
-//   };
-
-//   // Remove confirmPassword from payload
-//   const { confirmPassword, ...userData } = userPayload;
-
-//   console.log('User to be created:', userPayload);
-
-//   // Check MongoDB connection state
-//   if (mongoose.connection.readyState !== 1) {
-//     console.error('MongoDB connection not ready, state:', mongoose.connection.readyState);
-//     return {
-//       success: false,
-//       message: 'MongoDB connection is not ready.',
-//       data: { user: null, token: null },
-//     };
-//   }
-
-//   const session = await mongoose.startSession();
-
-//   try {
-//     await session.startTransaction();
-//     console.log('Transaction started');
-
-//     let user;
-
-//     // Create user
-//     if (method) {
-//       console.log('Creating user with create method');
-//       const created = await UserModel.create([userData], { session });
-//       user = created[0];
-//     } else {
-//       console.log('Creating user with new/save method');
-//       user = new UserModel({ ...userData });
-//       await user.save({ session });
-//     }
-
-//     console.log('User created:', user._id);
-
-//     // Create profile
-//     console.log('Creating profile');
-//     const profileCreation = await ProfileModel.create(
-//       [
-//         {
-//           name: userData.name ?? 'user',
-//           phone: userData.phone,
-//           email: userData.email!,
-//           user_id: user._id,
-//           // img: defaultImageUpload.secure_url, // Uncomment if needed
-//         },
-//       ],
-//       { session },
-//     );
-
-//     console.log('Profile created:', profileCreation[0]._id);
-
-//     // Commit the transaction
-//     await session.commitTransaction();
-//     console.log('Transaction committed');
-
-//     // Fetch the user after transaction
-//     const fetchedUser = await UserModel.findOne({ email: userData.email }).select('-password');
-//     if (!fetchedUser) {
-//       return {
-//         success: false,
-//         message: 'User created but not found after transaction.',
-//         data: { user: null, token: null },
-//       };
-//     }
-
-//     // Send OTP
-//     console.log('Sending OTP via email');
-//     const token = await authUtil.sendOTPviaEmail(fetchedUser);
-
-//     return {
-//       success: true,
-//       message: 'User created successfully and OTP sent.',
-//       user: fetchedUser.toObject(),
-//       token: token.token || null,
-//     };
-//   } catch (error: any) {
-//     await session.abortTransaction();
-//     console.error('Transaction failed:', error);
-//     return {
-//       success: false,
-//       message: error.message || 'User creation failed due to an internal error.',
-//       data: { user: null, token: null },
-//     };
-//   } finally {
-//     session.endSession();
-//     console.log('Session ended');
-//   }
-// };
-
 
 const createUser = async (payload: Partial<TUser>, file?: any, method?: string) => {
   // Validate password match
@@ -144,11 +15,6 @@ const createUser = async (payload: Partial<TUser>, file?: any, method?: string) 
   // Validate terms agreement
   if (!payload.agreedToTerms) {
     throw new Error('You must agree to the terms and conditions to register.');
-  }
-
-  // Validate file
-  if (!file || !file.path) {
-    throw new Error('Image file is required.');
   }
 
   // Check for existing user
@@ -181,15 +47,9 @@ const createUser = async (payload: Partial<TUser>, file?: any, method?: string) 
     await session.startTransaction();
     console.log('Transaction started');
 
-    // // Upload image to Cloudinary
-    // const imageName = `${userData.email}-${Date.now()}`; // Unique name
-    // const uploadResult = await uploadImgToCloudinary(imageName, file.path);
-    // const imageUrl = uploadResult.secure_url;
-    // console.log('Image uploaded to Cloudinary:', imageUrl);
-
     let imageUrl: string | undefined;
 
-    // Optional: Upload image to Cloudinary
+    // Optional: Upload image to Cloudinary if file is provided
     if (file?.path) {
       const imageName = `${userData.email}-${Date.now()}`;
       const uploadResult = await uploadImgToCloudinary(imageName, file.path);
@@ -198,12 +58,6 @@ const createUser = async (payload: Partial<TUser>, file?: any, method?: string) 
     } else {
       console.log('No image file provided, skipping upload');
     }
-
-    // // Add image URL to userData
-    // const userDataWithImg = {
-    //   ...userData,
-    //   img: imageUrl, // Include Cloudinary image URL for UserModel
-    // };
 
     // Add image URL to userData if available
     const userDataWithImg = {
@@ -226,7 +80,7 @@ const createUser = async (payload: Partial<TUser>, file?: any, method?: string) 
 
     console.log('User created:', user._id);
 
-    // Create profile with image URL
+    // Create profile with image URL (or undefined if no image)
     console.log('Creating profile');
     const profileCreation = await ProfileModel.create(
       [
@@ -235,7 +89,7 @@ const createUser = async (payload: Partial<TUser>, file?: any, method?: string) 
           phone: userData.phone,
           email: userData.email!,
           user_id: user._id,
-          img: imageUrl, // Include Cloudinary image URL
+          img: imageUrl, // Include Cloudinary image URL or undefined
         },
       ],
       { session },
@@ -267,8 +121,8 @@ const createUser = async (payload: Partial<TUser>, file?: any, method?: string) 
     await session.abortTransaction();
     console.error('Transaction failed:', error);
 
-    // Clean up local file if upload failed
-    if (file && file.path) {
+    // Clean up local file if upload failed and file was provided
+    if (file?.path) {
       try {
         await deleteFile(file.path);
       } catch (deleteError) {
