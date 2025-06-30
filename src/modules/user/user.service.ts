@@ -24,7 +24,7 @@ const createUser = async (
   }
 
   // Check for existing user
-  console.log('Checking if user exists');
+  // console.log('Checking if user exists');
   const existingUser = await UserModel.findOne({ email: payload.email }).select(
     '+password',
   );
@@ -41,7 +41,7 @@ const createUser = async (
   // Remove confirmPassword from payload
   const { confirmPassword, ...userData } = userPayload;
 
-  console.log('User to be created:', userPayload);
+  // console.log('User to be created:', userPayload);
 
   // Check MongoDB connection state
   if (mongoose.connection.readyState !== 1) {
@@ -56,7 +56,7 @@ const createUser = async (
 
   try {
     await session.startTransaction();
-    console.log('Transaction started');
+    // console.log('Transaction started');
 
     let imageUrl: string | undefined;
 
