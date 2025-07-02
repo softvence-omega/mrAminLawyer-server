@@ -8,16 +8,19 @@ import { userRole } from '../../constants';
 const authRouter = express.Router();
 
 authRouter.post('/logIn', validator(logInValidator), authController.logIn);
+
 authRouter.post(
   '/logOut',
   auth([userRole.admin, userRole.user]),
   authController.logOut,
 );
+
 authRouter.post(
   '/changePassword',
   auth([userRole.admin, userRole.user]),
   authController.changePassword,
 );
+
 authRouter.post('/otpCrossCheck', authController.otpCrossCheck);
 
 authRouter.post(
@@ -25,6 +28,7 @@ authRouter.post(
   auth([userRole.admin, userRole.user], { requestOTP: true }),
   authController.send_OTP,
 );
+
 authRouter.post('/reSend_OTP', authController.reSend_OTP);
 
 authRouter.post('/refresh-token', authController.refreshToken);
