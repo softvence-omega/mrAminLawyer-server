@@ -1,33 +1,40 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema, model } from "mongoose";
+import { TAssetList } from "./case.interface";
 
-// Asset List Schema
+// Asset Schema
 const assetSchema = new Schema({
   assetUrl: { type: String, required: true },
   assetName: { type: String, required: true },
   uploadDate: { type: String, required: true }
 });
 
-const assetListSchema = new Schema({
-  user_id: { type: Types.ObjectId, required: true },
-  caseOverview_id: { type: Types.ObjectId, required: true },
+// Asset List Schema
+const assetListSchema = new Schema<TAssetList>({
+  user_id: { type: Schema.Types.ObjectId, required: true },
+  caseOverview_id: { type: Schema.Types.ObjectId, required: true },
   assets: [assetSchema]
 });
 
 // Timeline Entry Schema
-const timelineEntrySchema = new Schema({
-  caseOverview_id: { type: Types.ObjectId, required: true },
-  user_id: { type: Types.ObjectId, required: true },
-  caseTitle: { type: String, required: true },
+const timelineSchema = new Schema({
   assetUrl: { type: String },
   title: { type: String, required: true },
   description: { type: String, required: true },
-  isDeleted: { type: Boolean, default: false },
-  date: { type: Date, required: true }
+  date: { type: String, required: true },
+  isDeleted: { type: Boolean, default: false }
+});
+
+// Timeline List Schema
+const timelineListSchema = new Schema({
+  caseOverview_id: { type: Schema.Types.ObjectId, required: true },
+  user_id: { type: Schema.Types.ObjectId, required: true },
+  caseTitle: { type: String, required: true },
+  timeLine: [timelineSchema]
 });
 
 // Case Overview Schema
 const caseOverviewSchema = new Schema({
-  user_id: { type: Types.ObjectId, required: true },
+  user_id: { type: Schema.Types.ObjectId, required: true },
   clientName: { type: String, required: true },
   caseType: { 
     type: String, 
@@ -41,13 +48,14 @@ const caseOverviewSchema = new Schema({
   },
   coatDate: { type: String },
   note: { type: String },
-  timeLine: [timelineEntrySchema],
+  assetList_id: { type: Schema.Types.ObjectId, ref:"AssetList", required:false },
+  timeLine_id: { type: Schema.Types.ObjectId, ref:"TimelineList", required:false},
   isDeleted: { type: Boolean, default: false }
 });
 
 // Models
-const AssetList = model("AssetList", assetListSchema);
-const TimelineEntry = model("TimelineEntry", timelineEntrySchema);
-const CaseOverview = model("CaseOverview", caseOverviewSchema);
+const AssetListModel = model("AssetList", assetListSchema);
+const TimelineListModel = model("TimelineList", timelineListSchema);
+const CaseOverviewModel = model("CaseOverview", caseOverviewSchema);
 
-export { AssetList, TimelineEntry, CaseOverview };
+export { AssetListModel, TimelineListModel, CaseOverviewModel };
