@@ -371,6 +371,31 @@ const getUserFullDetails = async (userId: Types.ObjectId) => {
   };
 };
 
+const blockUser = async (userId: string) => {
+  const user = await UserModel.findById(userId);
+  if (!user) {
+    throw new Error('User not found');
+  }
+  user.isBlocked = true;
+  user.isLoggedIn = false;
+  user.loggedOutTime = new Date();
+  await user.save();
+  return user;
+};
+
+const unblockUser = async (userId: string) => {
+  const user = await UserModel.findById(userId);
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  user.isBlocked = false;
+  await user.save();
+
+  return user;
+};
+
+
 const userServices = {
   createUser,
   getAllUsers,
@@ -384,6 +409,8 @@ const userServices = {
   updateUserByAdmin,
   getUserFullDetails,
   setFCMToken,
+  blockUser,
+  unblockUser
 };
 
 export default userServices;

@@ -69,4 +69,10 @@ userRoutes.patch(
   userController.updateUserProfile,
 );
 
+// PUT /users/block/:id
+userRoutes.put('/block/:id', auth([userRole.admin]), userController.blockUserController);
+
+// Unblock user
+userRoutes.put('/unblock/:id', auth([userRole.admin]), userController.unblockUserController);
+
 export default userRoutes;

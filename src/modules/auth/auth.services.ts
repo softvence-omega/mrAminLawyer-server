@@ -42,8 +42,11 @@ const logIn = async (
   }
 
   // Deny login for blocked/deleted users for normal email login
-  if ((user.isBlocked || user.isDeleted) && method === 'email_Pass') {
-    throw new Error('This user is blocked or deleted');
+  if ((user.isBlocked) && method === 'email_Pass') {
+    throw new Error('This user is blocked!');
+  }
+  if ((user.isDeleted) && method === 'email_Pass') {
+    throw new Error('This user is deleted!');
   }
 
   // Password check for email login
