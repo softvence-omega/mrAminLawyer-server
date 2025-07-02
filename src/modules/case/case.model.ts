@@ -17,7 +17,7 @@ const assetListSchema = new Schema<TAssetList>({
 
 // Timeline Entry Schema
 const timelineSchema = new Schema({
-  assetUrl: { type: String },
+  assetUrl: { type: [String] },
   title: { type: String, required: true },
   description: { type: String, required: true },
   date: { type: String, required: true },
