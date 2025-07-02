@@ -52,7 +52,7 @@ const sendOTPViaEmail = async (payload: Partial<TUser>) => {
 
   const html = `
   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-    <h2 style="color: #2c3e50;">LUNA Verification Code</h2>
+    <h2 style="color: #2c3e50;">Mr. Amin Lawyer Verification Code</h2>
     <p style="font-size: 16px;">Hello 👋,</p>
     <p style="font-size: 16px;">
       Your One-Time Password (OTP) is:
@@ -64,7 +64,7 @@ const sendOTPViaEmail = async (payload: Partial<TUser>) => {
       This OTP will expire in 5 minutes. If you did not request this, please ignore this email.
     </p>
     <hr style="margin: 30px 0;" />
-    <p style="font-size: 12px; color: #999;">Thank you,<br/>LUNA3 Team</p>
+    <p style="font-size: 12px; color: #999;">Thank you,<br/>M Team</p>
   </div>
 `;
 
@@ -82,7 +82,7 @@ const sendOTPViaEmail = async (payload: Partial<TUser>) => {
   //   now send mail to the user with otp
   const sendEmailWithOtp = await sendEmail(
     payload.email,
-    'OTP from LUNA3',
+    'OTP from Mr. Amin Lawyer',
     html,
   );
   if (!sendEmailWithOtp.success) {

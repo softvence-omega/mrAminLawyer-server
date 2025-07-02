@@ -6,7 +6,7 @@ import userServices from './user.service';
 
 const createUser = catchAsync(async (req, res): Promise<void> => {
   const file = req.file; // Assuming file is from middleware like multer
-  if (file) {
+  if (!file) {
     throw new Error('Image file is required');
   }
 
@@ -226,6 +226,32 @@ const getUserFullDetails = catchAsync(async (req, res) => {
   });
 });
 
+const blockUserController = catchAsync(async (req, res) => {
+  const userId = req.params.id;
+
+  const result = await userServices.blockUser(userId);
+
+  globalResponseHandler(res, {
+    statusCode: 200,
+    success: true,
+    message: 'User blocked successfully',
+    data: result,
+  });
+});
+
+const unblockUserController = catchAsync(async (req, res) => {
+  const userId = req.params.id;
+
+  const result = await userServices.unblockUser(userId);
+
+  globalResponseHandler(res, {
+    statusCode: 200,
+    success: true,
+    message: 'User unblocked successfully',
+    data: result,
+  });
+});
+
 const userController = {
   createUser,
   getAllUsers,
@@ -239,6 +265,8 @@ const userController = {
   updateUserByAdmin,
   getUserFullDetails,
   setFCMToken,
+  blockUserController,
+  unblockUserController
 };
 
 export default userController;
