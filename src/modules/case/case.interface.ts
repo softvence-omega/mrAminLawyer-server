@@ -18,7 +18,7 @@ export type TEachTimelineList = {
   caseTitle: string;
   timeLine:[
     {
-        assetUrl?: string;
+        assetUrl?: [string];
         title: string;
         description: string;
         date: string;
