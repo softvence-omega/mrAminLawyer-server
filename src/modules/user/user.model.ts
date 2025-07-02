@@ -48,6 +48,7 @@ const ProfileSchema = new Schema<TProfile>(
       required: false,
       ref: 'NotificationList',
     },
+    case_ids: [{ type: Schema.Types.ObjectId, ref: 'CaseCollection' }],
     isDeleted: { type: Boolean, required: false, default: false },
   },
   { timestamps: true },
