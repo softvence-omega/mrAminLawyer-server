@@ -48,6 +48,7 @@ interface CaseOverviewQuery {
   userId?: Types.ObjectId;
   page?: number;
   limit?: number;
+  caseStatus?: "Letter_sent_to_insurance" | "In_Progress" | "Closed" | "Pending";
 }
 
 /**
@@ -714,6 +715,7 @@ const findAllCasesWithDetails = async ({
   userId,
   page = 1,
   limit = 10,
+  caseStatus,
 }: CaseOverviewQuery): Promise<{
   cases: any[];
   total: number;
@@ -721,6 +723,16 @@ const findAllCasesWithDetails = async ({
   limit: number;
 }> => {
   const query: any = { isDeleted: false, user_id: new Types.ObjectId(userId) };
+
+  // Add case_status filter if caseStatus is provided
+  // if (caseStatus) {
+  //   query.case_status = caseStatus;
+  // }
+  // Add case-insensitive case_status filter if caseStatus is provided
+  if (caseStatus) {
+    query.case_status = { $regex: `^${caseStatus}$`, $options: 'i' };
+  }
+
   const skip = (page - 1) * limit;
 
   const [cases, total] = await Promise.all([
@@ -740,7 +752,16 @@ const findAllCasesWithDetails = async ({
     CaseOverviewModel.countDocuments(query).exec(),
   ]);
 
-  return { cases, total, page, limit };
+  // Ensure populated fields are not null
+  const formattedCases = cases.map(caseOverview => ({
+    ...caseOverview,
+    assetList_id: caseOverview.assetList_id || { assets: [] },
+    timeLine_id: caseOverview.timeLine_id || { timeLine: [], caseTitle: caseOverview.caseTitle },
+  }));
+
+  return { cases: formattedCases, total, page, limit };
+
+  // return { cases, total, page, limit };
 };
 
 const caseService = {

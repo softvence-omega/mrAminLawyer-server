@@ -72,6 +72,7 @@ export interface CaseOverviewQuery {
   userId: string;
   page?: number;
   limit?: number;
+  caseStatus?: 'Letter_sent_to_insurance' | 'In_Progress' | 'Closed' | 'Pending';
 }
 
 export interface CaseByIdQuery {
