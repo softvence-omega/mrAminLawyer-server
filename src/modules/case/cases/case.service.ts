@@ -724,10 +724,6 @@ const findAllCasesWithDetails = async ({
 }> => {
   const query: any = { isDeleted: false, user_id: new Types.ObjectId(userId) };
 
-  // Add case_status filter if caseStatus is provided
-  // if (caseStatus) {
-  //   query.case_status = caseStatus;
-  // }
   // Add case-insensitive case_status filter if caseStatus is provided
   if (caseStatus) {
     query.case_status = { $regex: `^${caseStatus}$`, $options: 'i' };
