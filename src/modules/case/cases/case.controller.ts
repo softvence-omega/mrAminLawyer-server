@@ -2,6 +2,7 @@ import { Types } from "mongoose";
 import catchAsync from "../../../util/catchAsync";
 import idConverter from "../../../util/idConverter";
 import caseService from "./case.service";
+import { CaseOverviewQuery } from "../case.interface";
 
 const manageCase = catchAsync(async (req, res) => {
   const payLoad = JSON.parse(req.body.data);
@@ -199,31 +200,46 @@ const findCaseById = catchAsync(async (req, res) => {
 });
 
 const findAllCasesWithDetails = catchAsync(async (req, res) => {
-  const userId = req.user?.id; // Extract admin ID from auth token
-  const userRole = req.user?.role; // Extract role from auth token
-  const payLoad = req.query;
+  const userId = req.user?.id;
+  const userRole = req.user?.role;
+  const { page, limit, caseStatus } = req.query;
 
-  if (userRole !== "admin") {
-    throw new Error("Only admins can retrieve cases with details");
-  }
   if (!userId || !Types.ObjectId.isValid(userId)) {
     throw new Error("Invalid or missing userId from token");
   }
 
-  const page = typeof payLoad.page === "string" ? parseInt(payLoad.page, 10) : 1;
-  const limit = typeof payLoad.limit === "string" ? parseInt(payLoad.limit, 10) : 10;
+  const pageNum = typeof page === "string" ? parseInt(page, 10) : 1;
+  const limitNum = typeof limit === "string" ? parseInt(limit, 10) : 10;
 
-  if (isNaN(page) || page < 1) {
+  if (isNaN(pageNum) || pageNum < 1) {
     throw new Error("Invalid page number");
   }
-  if (isNaN(limit) || limit < 1) {
+  if (isNaN(limitNum) || limitNum < 1) {
     throw new Error("Invalid limit value");
+  }
+
+  // // Validate caseStatus
+  // const validStatuses = ["Letter_sent_to_insurance", "In_Progress", "Closed", "Pending"];
+  // if (caseStatus && typeof caseStatus === "string" && !validStatuses.includes(caseStatus)) {
+  //   throw new Error(`Invalid caseStatus. Must be one of: ${validStatuses.join(", ")}`);
+  // }
+
+  // Validate caseStatus case-insensitively
+  const validStatuses = ["Letter_sent_to_insurance", "In_Progress", "Closed", "Pending"];
+  if (caseStatus && typeof caseStatus === "string") {
+    const isValid = validStatuses.some(
+      status => status.toLowerCase() === caseStatus.toLowerCase()
+    );
+    if (!isValid) {
+      throw new Error(`Invalid caseStatus. Must be one of: ${validStatuses.join(", ")}`);
+    }
   }
 
   const result = await caseService.findAllCasesWithDetails({
     userId,
-    page,
-    limit,
+    page: pageNum,
+    limit: limitNum,
+    caseStatus: caseStatus as CaseOverviewQuery['caseStatus'],
   });
 
   res.status(200).json({
