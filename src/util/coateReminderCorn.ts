@@ -125,7 +125,7 @@ const startCourtReminderCron = () => {
 
       // Send emails for each case
       for (const caseItem of cases) {
-        const user = await UserModel.findOne({ _id: caseItem.user_id, isDeleted: false }).lean();
+        const user = await UserModel.findOne({ _id: caseItem.client_user_id, isDeleted: false }).lean();
         console.log("found user========>>>>>>",user)
         if (user && user.email && caseItem.coatDate) {
           await sendReminderEmail(caseItem.clientName, user.email, caseItem.coatDate, caseItem.caseType);
