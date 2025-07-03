@@ -1,7 +1,7 @@
 import { Types } from 'mongoose';
 
 export type TAssetList = {
-  user_id: Types.ObjectId;
+  client_user_id: Types.ObjectId;
   caseOverview_id: Types.ObjectId;
   assets: [
     {
@@ -14,24 +14,24 @@ export type TAssetList = {
 
 export type TEachTimelineList = {
   caseOverview_id: Types.ObjectId;
-  user_id: Types.ObjectId;
+  client_user_id: Types.ObjectId;
   caseTitle: string;
-  timeLine:[
+  timeLine: [
     {
-        assetUrl?: [string];
-        title: string;
-        description: string;
-        date: string;
-        isDeleted?: boolean;
+      assetUrl?: string[];
+      title: string;
+      description: string;
+      date: string;
+      isDeleted?: boolean;
     }
-  ]
-
-  
+  ];
 };
 
 export type TCaseOverview = {
-  user_id: Types.ObjectId;
+  user_id: Types.ObjectId; // Admin who created the case
+  client_user_id: Types.ObjectId; // Client associated with the case
   clientName: string;
+  caseTitle: string;
   caseType:
     | 'Traffic_Violation'
     | 'License_Suspension'
@@ -50,3 +50,31 @@ export type TCaseOverview = {
   timeLine_id?: Types.ObjectId;
   isDeleted?: boolean;
 };
+
+export interface UpdateCasePayload {
+  caseOverviewId: string;
+  userId: string;
+  client_user_id?: string;
+  clientName?: string;
+  caseTitle?: string;
+  caseType?: string;
+  caseStatus?: string;
+  coatDate?: string;
+  note?: string;
+}
+
+export interface DeleteCasePayload {
+  caseOverviewId: string;
+  userId: string;
+}
+
+export interface CaseOverviewQuery {
+  userId: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface CaseByIdQuery {
+  caseOverviewId: string;
+  userId: string;
+}
