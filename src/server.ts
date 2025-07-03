@@ -3,8 +3,10 @@ import app from "./app";
 import { Server } from "http";
 import config from "./config";
 import adminSeeder from "./seeder/adminSeeder";
+import startCourtReminderCron from "./util/coateReminderCorn";
 
 let server: Server;
+startCourtReminderCron()
 
 async function main() {
   try {
