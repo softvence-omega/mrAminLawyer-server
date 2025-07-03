@@ -102,7 +102,7 @@ const sendReminderEmail = async (clientName: string, email: string, courtDate: s
 // Cron job function
 const startCourtReminderCron = () => {
   // Schedule cron job to run every 1 minute in server's local timezone
-  const job = cron.schedule('* * * * *', async () => {
+  const job = cron.schedule('30 11 * * *', async () => {
     try {
 
       // Get date for tomorrow
@@ -127,8 +127,17 @@ const startCourtReminderCron = () => {
       for (const caseItem of cases) {
         const user = await UserModel.findOne({ _id: caseItem.client_user_id, isDeleted: false }).lean();
         console.log("found user========>>>>>>",user)
-        if (user && user.email && caseItem.coatDate) {
+        if (user && user.email && caseItem.coatDate && caseItem.isMailSent === false) {
           await sendReminderEmail(caseItem.clientName, user.email, caseItem.coatDate, caseItem.caseType);
+          await CaseOverviewModel.findOneAndUpdate({
+            client_user_id: caseItem.client_user_id,
+            _id: caseItem._id
+            
+          },{
+            isMailSent:true
+          },{
+            new: true
+          })
         } else {
           console.log(`No valid email found for client ${caseItem.clientName} with user_id ${caseItem.user_id}`);
         }

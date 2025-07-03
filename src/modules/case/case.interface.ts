@@ -48,6 +48,7 @@ export type TCaseOverview = {
   note?: string;
   assetList_id?: Types.ObjectId;
   timeLine_id?: Types.ObjectId;
+  isMailSent?:boolean;
   isDeleted?: boolean;
 };
 
