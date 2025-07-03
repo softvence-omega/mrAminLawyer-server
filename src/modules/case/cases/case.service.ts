@@ -1,11 +1,14 @@
 import mongoose, { Types } from "mongoose";
-import { AssetListModel, CaseOverviewModel, TimelineListModel } from "../case.model";
 import { uploadPdfToCloudinary } from "../../../util/uploadImgToCludinary";
+import { AssetListModel, TimelineListModel, CaseOverviewModel } from "../case.model";
 import { ProfileModel } from "../../user/user.model";
+import { CaseByIdQuery } from "../case.interface";
 
 interface ManageCasePayload {
-  userId: string;
+  userId: string; // Admin or user ID (from req.user.id)
+  client_user_id?: string; // Client ID (from payload for admins, req.user.id for users)
   clientName?: string;
+  caseTitle?: string;
   caseType?: string;
   caseStatus?: string;
   coatDate?: string;
@@ -24,6 +27,23 @@ interface ManageCasePayload {
   };
 }
 
+export interface UpdateCasePayload {
+  userId: string; // Admin ID (from req.user.id)
+  caseOverviewId: string;
+  client_user_id?: string;
+  clientName?: string;
+  caseTitle?: string;
+  caseType?: string;
+  caseStatus?: string;
+  coatDate?: string;
+  note?: string;
+}
+
+export interface DeleteCasePayload {
+  userId: string; // Admin ID (from req.user.id)
+  caseOverviewId: string;
+}
+
 interface CaseOverviewQuery {
   userId?: Types.ObjectId;
   page?: number;
@@ -34,16 +54,16 @@ interface CaseOverviewQuery {
  * Create or Update Timeline List
  */
 const createOrUpdateTimelineList = async ({
-  userId,
-  clientName,
+  client_user_id,
+  caseTitle,
   caseOverviewId,
   timelineId = null,
   action = "case_started",
   additionalData = {},
   session,
 }: {
-  userId: string;
-  clientName: string;
+  client_user_id: string;
+  caseTitle: string;
   caseOverviewId: Types.ObjectId;
   timelineId?: Types.ObjectId | null;
   action?: "case_started" | "asset_updated" | "case_overview_updated" | "timeline_created";
@@ -57,7 +77,7 @@ const createOrUpdateTimelineList = async ({
         timelineEntry = {
           assetUrl: [],
           title: "Case Started",
-          description: `Case for ${clientName} began today.`,
+          description: `Case "${caseTitle}" began today.`,
           date: new Date().toISOString(),
           isDeleted: false,
         };
@@ -66,7 +86,7 @@ const createOrUpdateTimelineList = async ({
         timelineEntry = {
           assetUrl: additionalData.assetUrls || [],
           title: "Assets Updated",
-          description: `${additionalData.assetCount || "New"} asset(s) added to the case.`,
+          description: `${additionalData.assetCount || "New"} asset(s) added to the case "${caseTitle}".`,
           date: new Date().toISOString(),
           isDeleted: false,
         };
@@ -75,7 +95,7 @@ const createOrUpdateTimelineList = async ({
         timelineEntry = {
           assetUrl: [],
           title: "Case Updated",
-          description: `Case details updated. ${additionalData.changes ? "Changes: " + additionalData.changes : ""}`,
+          description: `Case "${caseTitle}" details updated. ${additionalData.changes ? "Changes: " + additionalData.changes : ""}`,
           date: new Date().toISOString(),
           isDeleted: false,
         };
@@ -84,7 +104,7 @@ const createOrUpdateTimelineList = async ({
         timelineEntry = {
           assetUrl: additionalData.assetUrl ? [additionalData.assetUrl] : [],
           title: additionalData.title || "Timeline Entry Added",
-          description: additionalData.description || "New timeline entry created.",
+          description: additionalData.description || `New timeline entry created for "${caseTitle}".`,
           date: additionalData.date || new Date().toISOString(),
           isDeleted: false,
         };
@@ -93,7 +113,7 @@ const createOrUpdateTimelineList = async ({
         timelineEntry = {
           assetUrl: [],
           title: "Case Activity",
-          description: `Activity recorded for ${clientName}.`,
+          description: `Activity recorded for "${caseTitle}".`,
           date: new Date().toISOString(),
           isDeleted: false,
         };
@@ -102,8 +122,8 @@ const createOrUpdateTimelineList = async ({
     if (!timelineId) {
       const timelineData = {
         caseOverview_id: caseOverviewId,
-        user_id: new Types.ObjectId(userId),
-        caseTitle: clientName,
+        client_user_id: new Types.ObjectId(client_user_id),
+        caseTitle,
         timeLine: [timelineEntry],
       };
       const timeline = await TimelineListModel.create([timelineData], { session });
@@ -125,14 +145,14 @@ const createOrUpdateTimelineList = async ({
  * Create or Update Asset List
  */
 const createOrUpdateAssetList = async ({
-  userId,
+  client_user_id,
   caseOverviewId,
   assetListData,
   files,
   assetListId = null,
   session,
 }: {
-  userId: string;
+  client_user_id: string;
   caseOverviewId: Types.ObjectId;
   assetListData: Array<{
     assetUrl: string;
@@ -170,7 +190,7 @@ const createOrUpdateAssetList = async ({
 
     if (!assetListId) {
       const assetListPayload = {
-        user_id: new Types.ObjectId(userId),
+        client_user_id: new Types.ObjectId(client_user_id),
         caseOverview_id: caseOverviewId,
         assets: uploadedAssets,
       };
@@ -194,7 +214,8 @@ const createOrUpdateAssetList = async ({
  */
 const manageCase = async (
   payload: ManageCasePayload,
-  files?: any[]
+  files?: any[],
+  userRole?: string
 ): Promise<{
   caseOverviewId: Types.ObjectId;
   assetListId?: Types.ObjectId;
@@ -212,106 +233,166 @@ const manageCase = async (
     if (!payload.userId || !Types.ObjectId.isValid(payload.userId)) {
       throw new Error("Valid userId is required");
     }
-    // if (files && (!payload.assetListData || payload.assetListData.length === 0)) {
-    //   throw new Error("No asset details provided with files");
-    // }
-    if (payload.assetListData && payload.assetListData.length > 0 && (!files || files.length === 0)) {
-      throw new Error("No files provided with assetListData");
-    }
-    if (files && payload.assetListData && files.length !== payload.assetListData.length) {
-      throw new Error(`Mismatch between files (${files.length}) and assetListData (${payload.assetListData.length})`);
-    }
 
-    if (!payload.caseOverviewId) {
-      // Create new case
-      if (!payload.clientName || !payload.caseType || !payload.caseStatus) {
-        throw new Error("clientName, caseType, and caseStatus are required for new case");
+    // Determine caseOverviewId and client_user_id based on role
+    if (userRole === "user") {
+      // Users can only add assets using clientName or caseOverviewId
+      if (payload.client_user_id || payload.caseTitle || payload.caseType || payload.caseStatus || payload.coatDate || payload.note || payload.timelineData) {
+        throw new Error("Users can only add assets");
+      }
+      if (!payload.clientName && !payload.caseOverviewId) {
+        throw new Error("clientName or caseOverviewId is required for users");
+      }
+      if (!payload.assetListData || payload.assetListData.length === 0 || !files || files.length === 0) {
+        throw new Error("assetListData and files are required for users");
+      }
+      if (files.length !== payload.assetListData.length) {
+        throw new Error(`Mismatch between files (${files.length}) and assetListData (${payload.assetListData.length})`);
       }
 
-      const caseOverviewData = {
-        user_id: new Types.ObjectId(payload.userId),
-        clientName: payload.clientName,
-        caseType: payload.caseType,
-        case_status: payload.caseStatus,
-        coatDate: payload.coatDate,
-        note: payload.note,
-        isDeleted: false,
-      };
-
-      const caseOverview = await CaseOverviewModel.create([caseOverviewData], { session });
-      caseOverviewId = caseOverview[0]._id;
-
-      // Create initial timeline
-      timelineId = await createOrUpdateTimelineList({
-        userId: payload.userId,
-        clientName: payload.clientName,
-        caseOverviewId,
-        action: "case_started",
-        session,
-      });
-
-      // Update CaseOverview with timelineId
-      await CaseOverviewModel.updateOne(
-        { _id: caseOverviewId },
-        { $set: { timeLine_id: timelineId } },
-        { session }
-      );
-
-      // Update user's case_ids
-      await ProfileModel.updateOne(
-        { _id: new Types.ObjectId(payload.userId) },
-        { $addToSet: { case_ids: caseOverviewId } },
-        { session }
-      );
-    } else {
-      // Update existing case
-      if (!Types.ObjectId.isValid(payload.caseOverviewId)) {
-        throw new Error("Invalid caseOverviewId");
+      let caseOverview;
+      if (payload.caseOverviewId) {
+        // Use caseOverviewId if provided
+        if (!Types.ObjectId.isValid(payload.caseOverviewId)) {
+          throw new Error("Invalid caseOverviewId");
+        }
+        caseOverview = await CaseOverviewModel.findOne({
+          _id: new Types.ObjectId(payload.caseOverviewId),
+          client_user_id: new Types.ObjectId(payload.userId),
+          isDeleted: false,
+        }).session(session);
+        if (!caseOverview) {
+          throw new Error(`No case found for caseOverviewId: ${payload.caseOverviewId}`);
+        }
+      } else {
+        // Use clientName and client_user_id
+        const cases = await CaseOverviewModel.find({
+          clientName: payload.clientName,
+          client_user_id: new Types.ObjectId(payload.userId),
+          isDeleted: false,
+        }).session(session);
+        if (cases.length === 0) {
+          throw new Error(`No case found for clientName: ${payload.clientName}`);
+        }
+        if (cases.length > 1) {
+          throw new Error(`Multiple cases found for clientName: ${payload.clientName}. Please provide caseOverviewId to specify the case.`);
+        }
+        caseOverview = cases[0];
       }
-      caseOverviewId = new Types.ObjectId(payload.caseOverviewId);
-      const caseOverview = await CaseOverviewModel.findById(caseOverviewId).session(session);
-      if (!caseOverview) {
-        throw new Error("Case not found");
-      }
+
+      caseOverviewId = caseOverview._id;
       timelineId = caseOverview.timeLine_id || null;
       assetListId = caseOverview.assetList_id || null;
+    } else if (userRole === "admin") {
+      // Admins can perform all operations
+      if (!payload.caseOverviewId) {
+        // Create new case
+        if (!payload.client_user_id || !payload.clientName || !payload.caseTitle || !payload.caseType || !payload.caseStatus) {
+          throw new Error("client_user_id, clientName, caseTitle, caseType, and caseStatus are required for new case");
+        }
+        if (!Types.ObjectId.isValid(payload.client_user_id)) {
+          throw new Error("Invalid client_user_id");
+        }
+        const caseOverviewData = {
+          user_id: new Types.ObjectId(payload.userId), // Admin ID
+          client_user_id: new Types.ObjectId(payload.client_user_id), // Client ID
+          clientName: payload.clientName,
+          caseTitle: payload.caseTitle,
+          caseType: payload.caseType,
+          case_status: payload.caseStatus,
+          coatDate: payload.coatDate,
+          note: payload.note,
+          isDeleted: false,
+        };
 
-      // Update case overview data if provided
-      const updateData: any = {};
-      if (payload.clientName) updateData.clientName = payload.clientName;
-      if (payload.caseType) updateData.caseType = payload.caseType;
-      if (payload.caseStatus) updateData.case_status = payload.caseStatus;
-      if (payload.coatDate) updateData.coatDate = payload.coatDate;
-      if (payload.note) updateData.note = payload.note;
+        const caseOverview = await CaseOverviewModel.create([caseOverviewData], { session });
+        caseOverviewId = caseOverview[0]._id;
 
-      if (Object.keys(updateData).length > 0) {
-        await CaseOverviewModel.updateOne({ _id: caseOverviewId }, { $set: updateData }, { session });
-        const changes = Object.keys(updateData)
-          .map((key) => `${key}: ${updateData[key]}`)
-          .join(", ");
+        // Create initial timeline
         timelineId = await createOrUpdateTimelineList({
-          userId: payload.userId,
-          clientName: caseOverview.clientName,
+          client_user_id: payload.client_user_id,
+          caseTitle: payload.caseTitle,
           caseOverviewId,
-          timelineId,
-          action: "case_overview_updated",
-          additionalData: { changes },
+          action: "case_started",
           session,
         });
-        if (!caseOverview.timeLine_id) {
-          await CaseOverviewModel.updateOne(
-            { _id: caseOverviewId },
-            { $set: { timeLine_id: timelineId } },
-            { session }
-          );
+
+        // Update CaseOverview with timelineId
+        await CaseOverviewModel.updateOne(
+          { _id: caseOverviewId },
+          { $set: { timeLine_id: timelineId } },
+          { session }
+        );
+
+        // Update user's case_ids (client_user_id)
+        await ProfileModel.updateOne(
+          { _id: new Types.ObjectId(payload.client_user_id) },
+          { $addToSet: { case_ids: caseOverviewId } },
+          { session }
+        );
+      } else {
+        // Update existing case
+        if (!Types.ObjectId.isValid(payload.caseOverviewId)) {
+          throw new Error("Invalid caseOverviewId");
+        }
+        caseOverviewId = new Types.ObjectId(payload.caseOverviewId);
+        const caseOverview = await CaseOverviewModel.findById(caseOverviewId).session(session);
+        if (!caseOverview) {
+          throw new Error("Case not found");
+        }
+        timelineId = caseOverview.timeLine_id || null;
+        assetListId = caseOverview.assetList_id || null;
+
+        // Update case overview data if provided
+        const updateData: any = {};
+        if (payload.clientName) updateData.clientName = payload.clientName;
+        if (payload.caseTitle) updateData.caseTitle = payload.caseTitle;
+        if (payload.caseType) updateData.caseType = payload.caseType;
+        if (payload.caseStatus) updateData.case_status = payload.caseStatus;
+        if (payload.coatDate) updateData.coatDate = payload.coatDate;
+        if (payload.note) updateData.note = payload.note;
+        if (payload.client_user_id) {
+          if (!Types.ObjectId.isValid(payload.client_user_id)) {
+            throw new Error("Invalid client_user_id");
+          }
+          updateData.client_user_id = new Types.ObjectId(payload.client_user_id);
+        }
+
+        if (Object.keys(updateData).length > 0) {
+          await CaseOverviewModel.updateOne({ _id: caseOverviewId }, { $set: updateData }, { session });
+          const changes = Object.keys(updateData)
+            .map((key) => `${key}: ${updateData[key]}`)
+            .join(", ");
+          timelineId = await createOrUpdateTimelineList({
+            client_user_id: caseOverview.client_user_id.toString(),
+            caseTitle: caseOverview.caseTitle,
+            caseOverviewId,
+            timelineId,
+            action: "case_overview_updated",
+            additionalData: { changes },
+            session,
+          });
+          if (!caseOverview.timeLine_id) {
+            await CaseOverviewModel.updateOne(
+              { _id: caseOverviewId },
+              { $set: { timeLine_id: timelineId } },
+              { session }
+            );
+          }
         }
       }
+    } else {
+      throw new Error("Invalid user role");
     }
 
-    // Handle assets if provided
+    // Handle assets if provided (both admin and user)
     if (payload.assetListData && files && payload.assetListData.length > 0) {
+      const client_user_id = userRole === "user" ? payload.userId : payload.client_user_id || (await CaseOverviewModel.findById(caseOverviewId).session(session))?.client_user_id.toString();
+      if (!client_user_id || !Types.ObjectId.isValid(client_user_id)) {
+        throw new Error("Valid client_user_id is required for asset addition");
+      }
       const { assetListId: newAssetListId, uploadedAssetUrls } = await createOrUpdateAssetList({
-        userId: payload.userId,
+        client_user_id,
         caseOverviewId,
         assetListData: payload.assetListData,
         files,
@@ -331,10 +412,10 @@ const manageCase = async (
       }
 
       // Automatically add timeline entry for asset update
-      const clientName = payload.clientName || caseOverview?.clientName || "Unknown";
+      const caseTitle = payload.caseTitle || caseOverview?.caseTitle || "Unknown";
       timelineId = await createOrUpdateTimelineList({
-        userId: payload.userId,
-        clientName,
+        client_user_id,
+        caseTitle,
         caseOverviewId,
         timelineId,
         action: "asset_updated",
@@ -355,17 +436,21 @@ const manageCase = async (
       }
     }
 
-    // Handle timeline entry if provided
-    if (payload.timelineData) {
+    // Handle timeline entry if provided (admin only)
+    if (payload.timelineData && userRole === "admin") {
       if (!payload.timelineData.title || !payload.timelineData.description) {
         throw new Error("Timeline entry must include title and description");
       }
-      const clientName =
-        payload.clientName || (await CaseOverviewModel.findById(caseOverviewId).session(session))?.clientName || "Unknown";
+      const caseOverview = await CaseOverviewModel.findById(caseOverviewId).session(session);
+      const caseTitle = payload.caseTitle || caseOverview?.caseTitle || "Unknown";
+      const client_user_id = caseOverview?.client_user_id.toString();
+      if (!client_user_id || !Types.ObjectId.isValid(client_user_id)) {
+        throw new Error("Valid client_user_id is required for timeline creation");
+      }
       if (!timelineId) {
         timelineId = await createOrUpdateTimelineList({
-          userId: payload.userId,
-          clientName,
+          client_user_id,
+          caseTitle,
           caseOverviewId,
           action: "case_started",
           session,
@@ -377,8 +462,8 @@ const manageCase = async (
         );
       }
       await createOrUpdateTimelineList({
-        userId: payload.userId,
-        clientName,
+        client_user_id,
+        caseTitle,
         caseOverviewId,
         timelineId,
         action: "timeline_created",
@@ -395,6 +480,177 @@ const manageCase = async (
     await session.abortTransaction();
     session.endSession();
     throw new Error(`Case operation failed: ${error.message}`);
+  }
+};
+
+
+/**
+ * Update Case Function
+ */
+const updateCase = async (payload: UpdateCasePayload): Promise<{
+  caseOverviewId: Types.ObjectId;
+  timelineId?: Types.ObjectId;
+}> => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { caseOverviewId, userId, ...updateData } = payload;
+
+    if (!Types.ObjectId.isValid(caseOverviewId)) {
+      throw new Error("Invalid caseOverviewId");
+    }
+    if (!Types.ObjectId.isValid(userId)) {
+      throw new Error("Invalid userId");
+    }
+
+    const caseOverview = await CaseOverviewModel.findOne({
+      _id: new Types.ObjectId(caseOverviewId),
+      isDeleted: false,
+    }).session(session);
+    if (!caseOverview) {
+      throw new Error("Case not found");
+    }
+
+    // Prepare update data
+    const updateFields: any = {};
+    if (updateData.clientName) updateFields.clientName = updateData.clientName;
+    if (updateData.caseTitle) updateFields.caseTitle = updateData.caseTitle;
+    if (updateData.caseType) updateFields.caseType = updateData.caseType;
+    if (updateData.caseStatus) updateFields.case_status = updateData.caseStatus;
+    if (updateData.coatDate) updateFields.coatDate = updateData.coatDate;
+    if (updateData.note) updateFields.note = updateData.note;
+    if (updateData.client_user_id) {
+      if (!Types.ObjectId.isValid(updateData.client_user_id)) {
+        throw new Error("Invalid client_user_id");
+      }
+      updateFields.client_user_id = new Types.ObjectId(updateData.client_user_id);
+    }
+
+    if (Object.keys(updateFields).length === 0) {
+      throw new Error("No valid fields provided for update");
+    }
+
+    // Update case overview
+    await CaseOverviewModel.updateOne(
+      { _id: new Types.ObjectId(caseOverviewId) },
+      { $set: updateFields },
+      { session }
+    );
+
+    // Update ProfileModel if client_user_id changes
+    if (updateData.client_user_id && updateData.client_user_id !== caseOverview.client_user_id.toString()) {
+      // Remove case from old client's case_ids
+      await ProfileModel.updateOne(
+        { _id: caseOverview.client_user_id },
+        { $pull: { case_ids: new Types.ObjectId(caseOverviewId) } },
+        { session }
+      );
+      // Add case to new client's case_ids
+      await ProfileModel.updateOne(
+        { _id: new Types.ObjectId(updateData.client_user_id) },
+        { $addToSet: { case_ids: new Types.ObjectId(caseOverviewId) } },
+        { session }
+      );
+    }
+
+    // Add timeline entry for update
+    const changes = Object.keys(updateFields)
+      .map((key) => `${key}: ${updateFields[key]}`)
+      .join(", ");
+    const timelineId = await createOrUpdateTimelineList({
+      client_user_id: updateFields.client_user_id?.toString() || caseOverview.client_user_id.toString(),
+      caseTitle: updateFields.caseTitle || caseOverview.caseTitle,
+      caseOverviewId: new Types.ObjectId(caseOverviewId),
+      timelineId: caseOverview.timeLine_id || null,
+      action: "case_overview_updated",
+      additionalData: { changes },
+      session,
+    });
+
+    // Update CaseOverview with timelineId if not set
+    if (!caseOverview.timeLine_id) {
+      await CaseOverviewModel.updateOne(
+        { _id: new Types.ObjectId(caseOverviewId) },
+        { $set: { timeLine_id: timelineId } },
+        { session }
+      );
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return { caseOverviewId: new Types.ObjectId(caseOverviewId), timelineId };
+  } catch (error: any) {
+    await session.abortTransaction();
+    session.endSession();
+    throw new Error(`Case update failed: ${error.message}`);
+  }
+};
+
+/**
+ * Delete Case Function (Soft Delete)
+ */
+const deleteCase = async (payload: DeleteCasePayload): Promise<void> => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { caseOverviewId, userId } = payload;
+
+    if (!Types.ObjectId.isValid(caseOverviewId)) {
+      throw new Error("Invalid caseOverviewId");
+    }
+    if (!Types.ObjectId.isValid(userId)) {
+      throw new Error("Invalid userId");
+    }
+
+    const caseOverview = await CaseOverviewModel.findOne({
+      _id: new Types.ObjectId(caseOverviewId),
+      isDeleted: false,
+    }).session(session);
+    if (!caseOverview) {
+      throw new Error("Case not found");
+    }
+
+    // Soft delete CaseOverview
+    await CaseOverviewModel.updateOne(
+      { _id: new Types.ObjectId(caseOverviewId) },
+      { $set: { isDeleted: true } },
+      { session }
+    );
+
+    // Soft delete associated AssetList
+    if (caseOverview.assetList_id) {
+      await AssetListModel.updateOne(
+        { _id: caseOverview.assetList_id },
+        { $set: { isDeleted: true } },
+        { session }
+      );
+    }
+
+    // Soft delete associated TimelineList
+    if (caseOverview.timeLine_id) {
+      await TimelineListModel.updateOne(
+        { _id: caseOverview.timeLine_id },
+        { $set: { isDeleted: true } },
+        { session }
+      );
+    }
+
+    // Remove case from client's case_ids
+    await ProfileModel.updateOne(
+      { _id: caseOverview.client_user_id },
+      { $pull: { case_ids: new Types.ObjectId(caseOverviewId) } },
+      { session }
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+  } catch (error: any) {
+    await session.abortTransaction();
+    session.endSession();
+    throw new Error(`Case deletion failed: ${error.message}`);
   }
 };
 
@@ -423,9 +679,77 @@ const findCaseOverviews = async ({
   return { caseOverviews, total, page, limit };
 };
 
+const findCaseById = async ({
+  caseOverviewId,
+  userId,
+}: CaseByIdQuery): Promise<{
+  caseOverview: any;
+}> => {
+  const query: any = {
+    _id: new Types.ObjectId(caseOverviewId),
+    user_id: new Types.ObjectId(userId),
+    isDeleted: false,
+  };
+
+  const caseOverview = await CaseOverviewModel.findOne(query)
+    .populate({
+      path: "assetList_id",
+      select: "assets", // Corrected to match schema field
+    })
+    .populate({
+      path: "timeLine_id",
+      select: "timeLine", // Include caseTitle if needed
+    })
+    .lean()
+    .exec();
+
+  if (!caseOverview) {
+    throw new Error("Case not found");
+  }
+
+  return { caseOverview };
+};
+
+const findAllCasesWithDetails = async ({
+  userId,
+  page = 1,
+  limit = 10,
+}: CaseOverviewQuery): Promise<{
+  cases: any[];
+  total: number;
+  page: number;
+  limit: number;
+}> => {
+  const query: any = { isDeleted: false, user_id: new Types.ObjectId(userId) };
+  const skip = (page - 1) * limit;
+
+  const [cases, total] = await Promise.all([
+    CaseOverviewModel.find(query)
+      .populate({
+        path: "assetList_id",
+        select: "assets",
+      })
+      .populate({
+        path: "timeLine_id",
+        select: "timeLine",
+      })
+      .skip(skip)
+      .limit(limit)
+      .lean()
+      .exec(),
+    CaseOverviewModel.countDocuments(query).exec(),
+  ]);
+
+  return { cases, total, page, limit };
+};
+
 const caseService = {
   manageCase,
+  updateCase,
+  deleteCase,
   findCaseOverviews,
+  findCaseById,
+  findAllCasesWithDetails
 };
 
 export default caseService;
