@@ -4,6 +4,7 @@ import validator from '../../util/validator';
 import { logInValidator } from './auth.validator';
 import auth from '../../middleware/auth';
 import { userRole } from '../../constants';
+import { UserModel } from '../user/user.model';
 
 const authRouter = express.Router();
 
@@ -35,5 +36,10 @@ authRouter.post('/refresh-token', authController.refreshToken);
 authRouter.post('/forgetPassword', authController.forgetPassword);
 authRouter.post('/resetPassword', authController.resetPassword);
 authRouter.get('/profile', authController.collectProfileData);
+
+authRouter.get('/admins', auth([userRole.user]), async (req, res) => {
+  const admins = await UserModel.find({ role: 'admin' }).select('-password');
+  res.status(200).json(admins);
+});
 
 export default authRouter;
