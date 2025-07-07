@@ -4,6 +4,7 @@ import { Server } from "http";
 import config from "./config";
 import adminSeeder from "./seeder/adminSeeder";
 import startCourtReminderCron from "./util/coateReminderCorn";
+import { setupWebSocket } from './util/webSocket';
 
 let server: Server;
 startCourtReminderCron()
@@ -16,6 +17,10 @@ async function main() {
     server = app.listen(config.port, () => {
       console.log(`Mr. Amin Lawyer server app listening on port ${config.port}`);
     });
+
+    // Setup WebSocket after server is ready
+    const wss = setupWebSocket(server, config.jwt_token_secret);
+    app.set('wss', wss);
   } 
   catch (err : any) {
     throw Error('something went wrong in server or mongoose connection');
