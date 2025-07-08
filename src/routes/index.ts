@@ -3,6 +3,7 @@ import authRouter from '../modules/auth/auth.routes';
 import userRoutes from '../modules/user/user.routes';
 import caseRoutes from '../modules/case/cases/case.route';
 import messageRouter from '../modules/message/message.routes';
+import notificationRouter from '../modules/notifications/notifiacations.routes';
 
 const Routes = express.Router();
 // Array of module routes
@@ -22,6 +23,10 @@ const moduleRouts = [
   {
     path: '/message',
     router: messageRouter,
+  },
+  {
+    path: '/notifications',
+    router: notificationRouter,
   },
 ];
 
