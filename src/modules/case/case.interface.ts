@@ -48,6 +48,7 @@ export type TCaseOverview = {
   note?: string;
   assetList_id?: Types.ObjectId;
   timeLine_id?: Types.ObjectId;
+  vehicleNumber?: string;
   isMailSent?:boolean;
   isDeleted?: boolean;
 };
@@ -74,6 +75,7 @@ export interface CaseOverviewQuery {
   page?: number;
   limit?: number;
   caseStatus?: 'Letter_sent_to_insurance' | 'In_Progress' | 'Closed' | 'Pending';
+  vehicleNumber?: string;
 }
 
 export interface CaseByIdQuery {

@@ -52,6 +52,7 @@ const caseOverviewSchema = new Schema({
   note: { type: String },
   assetList_id: { type: Schema.Types.ObjectId, ref: "AssetList", required: false },
   timeLine_id: { type: Schema.Types.ObjectId, ref: "TimelineList", required: false },
+  vehicleNumber: { type: String, required: true },
   isMailSent:{ type: Boolean, default: false },
   isDeleted: { type: Boolean, default: false }
 });

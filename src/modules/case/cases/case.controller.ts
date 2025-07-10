@@ -20,7 +20,7 @@ const manageCase = catchAsync(async (req, res) => {
   // Validate based on role and operation
   if (userRole === "user") {
     // Users can only add assets with clientName or caseOverviewId
-    if (payLoad.client_user_id || payLoad.caseTitle || payLoad.caseType || payLoad.caseStatus || payLoad.coatDate || payLoad.note || payLoad.timelineData) {
+    if (payLoad.client_user_id || payLoad.caseTitle || payLoad.caseType || payLoad.caseStatus || payLoad.coatDate || payLoad.note || payLoad.timelineData || payLoad.vehicleNumber) {
       throw new Error("Users can only add assets");
     }
     if (!payLoad.clientName && !payLoad.caseOverviewId) {
@@ -38,7 +38,7 @@ const manageCase = catchAsync(async (req, res) => {
   } else if (userRole === "admin") {
     if (!payLoad.caseOverviewId) {
       // New case creation
-      if (!payLoad.client_user_id || !payLoad.clientName || !payLoad.caseTitle || !payLoad.caseType || !payLoad.caseStatus) {
+      if (!payLoad.client_user_id || !payLoad.clientName || !payLoad.caseTitle || !payLoad.caseType || !payLoad.caseStatus || !payLoad.vehicleNumber) {
         throw new Error("client_user_id, clientName, caseTitle, caseType, and caseStatus are required for new case");
       }
       if (!Types.ObjectId.isValid(payLoad.client_user_id)) {
@@ -202,7 +202,7 @@ const findCaseById = catchAsync(async (req, res) => {
 const findAllCasesWithDetails = catchAsync(async (req, res) => {
   const userId = req.user?.id;
   const userRole = req.user?.role;
-  const { page, limit, caseStatus } = req.query;
+  const { page, limit, caseStatus, vehicleNumber } = req.query;
 
   if (!userId || !Types.ObjectId.isValid(userId)) {
     throw new Error("Invalid or missing userId from token");
@@ -240,6 +240,7 @@ const findAllCasesWithDetails = catchAsync(async (req, res) => {
     page: pageNum,
     limit: limitNum,
     caseStatus: caseStatus as CaseOverviewQuery['caseStatus'],
+    vehicleNumber: vehicleNumber as string,
   });
 
   res.status(200).json({
