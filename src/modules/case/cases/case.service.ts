@@ -14,6 +14,7 @@ interface ManageCasePayload {
   coatDate?: string;
   note?: string;
   caseOverviewId?: string;
+  vehicleNumber?: string;
   assetListData?: Array<{
     assetUrl: string;
     assetName: string;
@@ -37,6 +38,7 @@ export interface UpdateCasePayload {
   caseStatus?: string;
   coatDate?: string;
   note?: string;
+  vehicleNumber?: string;
 }
 
 export interface DeleteCasePayload {
@@ -49,6 +51,7 @@ interface CaseOverviewQuery {
   page?: number;
   limit?: number;
   caseStatus?: "Letter_sent_to_insurance" | "In_Progress" | "Closed" | "Pending";
+  vehicleNumber?: string; 
 }
 
 /**
@@ -577,7 +580,7 @@ const manageCase = async (
       // Admins can perform all operations
       if (!payload.caseOverviewId) {
         // Create new case
-        if (!payload.client_user_id || !payload.clientName || !payload.caseTitle || !payload.caseType || !payload.caseStatus) {
+        if (!payload.client_user_id || !payload.clientName || !payload.caseTitle || !payload.caseType || !payload.caseStatus || !payload.vehicleNumber) {
           throw new Error("client_user_id, clientName, caseTitle, caseType, and caseStatus are required for new case");
         }
         if (!Types.ObjectId.isValid(payload.client_user_id)) {
@@ -602,6 +605,7 @@ const manageCase = async (
           case_status: payload.caseStatus,
           coatDate: payload.coatDate,
           note: payload.note,
+          vehicleNumber: payload.vehicleNumber,
           isDeleted: false,
         };
 
@@ -651,6 +655,7 @@ const manageCase = async (
         if (payload.caseStatus) updateData.case_status = payload.caseStatus;
         if (payload.coatDate) updateData.coatDate = payload.coatDate;
         if (payload.note) updateData.note = payload.note;
+        if (payload.vehicleNumber) updateData.vehicleNumber = payload.vehicleNumber;
         if (payload.client_user_id) {
           if (!Types.ObjectId.isValid(payload.client_user_id)) {
             throw new Error("Invalid client_user_id");
@@ -841,6 +846,7 @@ const updateCase = async (payload: UpdateCasePayload): Promise<{
     if (updateData.caseStatus) updateFields.case_status = updateData.caseStatus;
     if (updateData.coatDate) updateFields.coatDate = updateData.coatDate;
     if (updateData.note) updateFields.note = updateData.note;
+    if (updateData.vehicleNumber) updateFields.vehicleNumber = updateData.vehicleNumber;
     if (updateData.client_user_id) {
       if (!Types.ObjectId.isValid(updateData.client_user_id)) {
         throw new Error("Invalid client_user_id");
@@ -1058,6 +1064,7 @@ const findAllCasesWithDetails = async ({
   page = 1,
   limit = 10,
   caseStatus,
+  vehicleNumber,
 }: CaseOverviewQuery): Promise<{
   cases: any[];
   total: number;
@@ -1069,6 +1076,11 @@ const findAllCasesWithDetails = async ({
   // Add case-insensitive case_status filter if caseStatus is provided
   if (caseStatus) {
     query.case_status = { $regex: `^${caseStatus}$`, $options: 'i' };
+  }
+
+  // Add vehicleNumber filter if provided
+  if(vehicleNumber) {
+    query.vehicleNumber = { $regex: `^${vehicleNumber}$`, $options: 'i' };
   }
 
   const skip = (page - 1) * limit;
