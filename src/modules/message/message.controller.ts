@@ -4,6 +4,7 @@ import messageService from './message.service';
 import idConverter from '../../util/idConverter';
 import { Types } from 'mongoose';
 import { UserModel } from '../user/user.model';
+import { sendSingleNotification } from '../../firebaseSetup/sendPushNotification';
 
 const getMessages = catchAsync(async (req: Request, res: Response) => {
   const userId = idConverter(req.user.id);
@@ -40,6 +41,8 @@ const sendMessage = catchAsync(async (req: Request, res: Response) => {
       client.send(JSON.stringify(message));
     }
   });
+
+  await sendSingleNotification(senderId, 'You have a message', `Dear, you have just got a new message from ${req.user.name}`);
 
   res.status(201).json(message);
 });
