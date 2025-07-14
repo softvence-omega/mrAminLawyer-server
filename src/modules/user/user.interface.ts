@@ -24,6 +24,7 @@ export type TUser = {
   loggedOutTime?: Date;
   passwordChangeTime?: Date;
   fcmToken?: string;
+  notificationsEnabled?: boolean;
 };
 
 export type TProfile = {

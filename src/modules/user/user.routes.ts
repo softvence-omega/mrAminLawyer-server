@@ -4,6 +4,7 @@ import { userRole } from '../../constants';
 
 import { upload } from '../../util/uploadImgToCludinary';
 import auth from '../../middleware/auth';
+import { UserModel } from './user.model';
 const userRoutes = express.Router();
 
 // users routes
@@ -85,5 +86,29 @@ userRoutes.put('/block/:id', auth([userRole.admin]), userController.blockUserCon
 
 // Unblock user
 userRoutes.put('/unblock/:id', auth([userRole.admin]), userController.unblockUserController);
+
+// PATCH /user/notification-toggle
+userRoutes.patch(
+  '/notification-toggle',
+  auth([userRole.user, userRole.admin]),
+  async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { enabled } = req.body;
+
+      await UserModel.findByIdAndUpdate(userId, {
+        notificationsEnabled: enabled,
+      });
+
+      res.json({
+        success: true,
+        message: `Notifications ${enabled ? 'enabled' : 'disabled'}`,
+      });
+    } catch (error) {
+      console.error('Notification toggle error:', error);
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  },
+);
 
 export default userRoutes;
