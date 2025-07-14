@@ -78,6 +78,7 @@ import mongoose from 'mongoose';
 import { UserModel } from '../modules/user/user.model';
 import { sendEmail } from './sendEmail';
 import { CaseOverviewModel } from '../modules/case/case.model';
+import { sendSingleNotification } from '../firebaseSetup/sendPushNotification';
 
 
 // Function to send reminder email
@@ -138,6 +139,9 @@ const startCourtReminderCron = () => {
           },{
             new: true
           })
+
+          await sendSingleNotification(user._id, 'Court Date Reminder', `Dear ${caseItem.clientName}, your court date for your ${caseItem.caseType} case is scheduled for ${new Date(caseItem.coatDate).toDateString()}. Please ensure you are prepared.`);
+
         } else {
           console.log(`No valid email found for client ${caseItem.clientName} with user_id ${caseItem.user_id}`);
         }
