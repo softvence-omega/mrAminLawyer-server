@@ -6,9 +6,9 @@ import userServices from './user.service';
 
 const createUser = catchAsync(async (req, res): Promise<void> => {
   const file = req.file; // Assuming file is from middleware like multer
-  if (!file) {
-    throw new Error('Image file is required');
-  }
+  // if (!file) {
+  //   throw new Error('Image file is required');
+  // }
 
   const data = req.body.data;
   if (!data) {
