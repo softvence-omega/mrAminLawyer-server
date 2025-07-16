@@ -34,7 +34,7 @@ export const sendSingleNotification = async (
         title,
         body,
       },
-      token: user.fcmToken, // Use first token for simplicity
+      token: user.fcmToken, 
     };
 
     // Await Firebase notification send

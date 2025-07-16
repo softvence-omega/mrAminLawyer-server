@@ -35,6 +35,6 @@ export type TProfile = {
   emailNotification: boolean;
   case_ids?:[Types.ObjectId];
   user_id: Types.ObjectId;
-  notificationList_id?: Types.ObjectId; // Optional to align with schema
+  notificationList_id?: Types.ObjectId;
   isDeleted?: boolean;
 };
