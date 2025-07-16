@@ -7,7 +7,7 @@ export type TUserRole = 'admin' | 'user';
 export type TInterviewsAvailable = number | 'unlimited';
 
 export type TUser = {
-  img:string,
+  img?:string,
   name: string;
   phone?: string;
   email: string;
