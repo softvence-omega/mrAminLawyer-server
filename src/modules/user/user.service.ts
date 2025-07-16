@@ -121,14 +121,14 @@ const createUser = async (
     }
 
     // Send OTP
-    console.log('Sending OTP via email');
-    const token = await authUtil.sendOTPViaEmail(fetchedUser);
+    // console.log('Sending OTP via email');
+    // const token = await authUtil.sendOTPViaEmail(fetchedUser);
 
     return {
       success: true,
       message: 'User created successfully and OTP sent.',
       user: fetchedUser.toObject(),
-      token: token.token || null,
+      // token: token.token || null,
     };
   } catch (error: any) {
     await session.abortTransaction();
