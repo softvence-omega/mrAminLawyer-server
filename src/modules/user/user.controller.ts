@@ -96,18 +96,35 @@ const updateUserProfile = catchAsync(async (req, res) => {
   });
 });
 
+// const updateProfileData = catchAsync(async (req, res) => {
+//   const user_id =
+//     typeof req.user.id === 'string' ? idConverter(req.user.id) : req.user.id;
+//   const payload = req.body;
+//   const result = await userServices.updateProfileData(user_id, payload);
+//   globalResponseHandler(res, {
+//     statusCode: 200,
+//     success: true,
+//     message: 'profile updated',
+//     data: result,
+//   });
+// });
+
 const updateProfileData = catchAsync(async (req, res) => {
   const user_id =
     typeof req.user.id === 'string' ? idConverter(req.user.id) : req.user.id;
+
   const payload = req.body;
-  const result = await userServices.updateProfileData(user_id, payload);
+
+  const updatedProfile = await userServices.updateProfileData(user_id, payload);
+
   globalResponseHandler(res, {
     statusCode: 200,
     success: true,
-    message: 'profile updated',
-    data: result,
+    message: 'Profile and User data updated successfully',
+    data: updatedProfile,
   });
 });
+
 
 const deleteSingleUser = catchAsync(async (req, res) => {
   const user_id = req.query.user_id as string;
