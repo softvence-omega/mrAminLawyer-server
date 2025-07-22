@@ -268,56 +268,114 @@ const updateProfileData = async (
   user_id: Types.ObjectId,
   payload: Partial<TProfile & { name?: string; email?: string }>,
 ) => {
+  const session = await ProfileModel.startSession();
+  session.startTransaction();
+
   try {
-    // Separate user-related fields from profile fields
     const userFields: Record<string, any> = {};
     const profileFields: Record<string, any> = {};
 
-    // Assume user model has name and email fields
-    if (payload.name) userFields.name = payload.name;
-    if (payload.email) userFields.email = payload.email;
+    // ✅ Update both User and Profile for name/email if provided
+    if (payload.name) {
+      userFields.name = payload.name;
+      profileFields.name = payload.name;
+    }
+    if (payload.email) {
+      userFields.email = payload.email;
+      profileFields.email = payload.email;
+    }
 
-    // Remaining fields go to profile
-    const excludedKeys = ['name', 'email'];
+    // ✅ Add other fields for profile
     Object.keys(payload).forEach((key) => {
-      if (!excludedKeys.includes(key)) {
+      if (!['name', 'email'].includes(key)) {
         profileFields[key] = (payload as any)[key];
       }
     });
 
-    // Start transaction for atomic update
-    const session = await ProfileModel.startSession();
-    session.startTransaction();
-
-    try {
-      // Update User if fields exist
-      if (Object.keys(userFields).length > 0) {
-        await UserModel.findByIdAndUpdate(user_id, { $set: userFields }, { new: true, runValidators: true, session });
-      }
-
-      // Update Profile if fields exist
-      let updatedProfile = null;
-      if (Object.keys(profileFields).length > 0) {
-        updatedProfile = await ProfileModel.findOneAndUpdate(
-          { user_id },
-          { $set: profileFields },
-          { new: true, runValidators: true, session },
-        );
-      }
-
-      await session.commitTransaction();
-      session.endSession();
-
-      return updatedProfile;
-    } catch (err) {
-      await session.abortTransaction();
-      session.endSession();
-      throw err;
+    // ✅ Update User
+    if (Object.keys(userFields).length > 0) {
+      await UserModel.findByIdAndUpdate(user_id, { $set: userFields }, { session });
     }
+
+    // ✅ Update Profile
+    if (Object.keys(profileFields).length > 0) {
+      await ProfileModel.findOneAndUpdate(
+        { user_id },
+        { $set: profileFields },
+        { new: true, runValidators: true, upsert: true, session },
+      );
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    // ✅ Fetch latest data (with populate)
+    const updatedProfile = await ProfileModel.findOne({ user_id }).populate('user_id');
+
+    return updatedProfile;
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
     throw error;
   }
 };
+
+
+
+// const updateProfileData = async (
+//   user_id: Types.ObjectId,
+//   payload: Partial<TProfile & { name?: string; email?: string }>,
+// ) => {
+//   try {
+//     // Separate user-related fields from profile fields
+//     const userFields: Record<string, any> = {};
+//     const profileFields: Record<string, any> = {};
+
+//     // Assume user model has name and email fields
+//     if (payload.name) userFields.name = payload.name;
+//     if (payload.email) userFields.email = payload.email;
+
+//     // Remaining fields go to profile
+//     const excludedKeys = ['name', 'email'];
+//     Object.keys(payload).forEach((key) => {
+//       if (!excludedKeys.includes(key)) {
+//         profileFields[key] = (payload as any)[key];
+//       }
+//     });
+
+//     // Start transaction for atomic update
+//     const session = await ProfileModel.startSession();
+//     session.startTransaction();
+
+//     try {
+//       // Update User if fields exist
+//       if (Object.keys(userFields).length > 0) {
+//         await UserModel.findByIdAndUpdate(user_id, { $set: userFields }, { new: true, runValidators: true, session });
+//       }
+
+//       // Update Profile if fields exist
+//       let updatedProfile = null;
+//       if (Object.keys(profileFields).length > 0) {
+//         updatedProfile = await ProfileModel.findOneAndUpdate(
+//           { user_id },
+//           { $set: profileFields },
+//           { new: true, runValidators: true, session },
+//         );
+//       }
+
+//       await session.commitTransaction();
+//       session.endSession();
+
+//       return updatedProfile;
+//     } catch (err) {
+//       await session.abortTransaction();
+//       session.endSession();
+//       throw err;
+//     }
+//   } catch (error) {
+//     throw error;
+//   }
+// };
 
 const deleteSingleUser = async (user_id: Types.ObjectId) => {
   const session: ClientSession = await mongoose.startSession();
