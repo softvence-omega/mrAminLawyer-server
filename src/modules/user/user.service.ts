@@ -170,10 +170,40 @@ const setFCMToken = async (user_id: Types.ObjectId, fcmToken: string) => {
   return result;
 };
 
+// const getAllUsers = async () => {
+//   const result = await UserModel.find({ isBlocked: false, isDeleted: false });
+//   return result;
+// };
+
 const getAllUsers = async () => {
-  const result = await UserModel.find({ isBlocked: false, isDeleted: false });
-  return result;
+  const result = await UserModel.find({ isBlocked: false, isDeleted: false })
+    .lean(); // Use lean for better performance (optional)
+
+  // Fetch profiles with case details for each user
+  const usersWithProfiles = await Promise.all(
+    result.map(async (user) => {
+      const profile = await ProfileModel.findOne({ user_id: user._id })
+        .populate([
+          {
+            path: 'case_ids',
+            model: 'CaseOverview',
+            populate: [
+              { path: 'assetList_id', model: 'AssetList' },
+              { path: 'timeLine_id', model: 'TimelineList' },
+            ],
+          },
+        ]);
+
+      return {
+        ...user,
+        profile, // Add profile with full case details
+      };
+    })
+  );
+
+  return usersWithProfiles;
 };
+
 
 const getAllProfiles = async () => {
   // Assuming you have a Profile model, fetch all profiles
@@ -379,9 +409,32 @@ const uploadOrChangeImg = async (
   return updatedUserProfile;
 };
 
+// const getProfile = async (user_id: Types.ObjectId) => {
+//   const profile = await ProfileModel.findOne({ user_id }).populate([
+//     { path: 'user_id', model: 'UserCollection' },
+//   ]);
+
+//   if (!profile) {
+//     throw new Error('Profile not found for the given user_id');
+//   }
+
+//   return profile;
+// };
+
 const getProfile = async (user_id: Types.ObjectId) => {
   const profile = await ProfileModel.findOne({ user_id }).populate([
-    { path: 'user_id', model: 'UserCollection' },
+    {
+      path: 'user_id',
+      model: 'UserCollection',
+    },
+    {
+      path: 'case_ids',
+      model: 'CaseOverview', // This will fetch full case details
+      populate: [
+        { path: 'assetList_id', model: 'AssetList' }, // Include assets if needed
+        { path: 'timeLine_id', model: 'TimelineList' }, // Include timeline if needed
+      ],
+    },
   ]);
 
   if (!profile) {
@@ -390,6 +443,8 @@ const getProfile = async (user_id: Types.ObjectId) => {
 
   return profile;
 };
+
+
 
 // In userServices.ts
 const updateUserByAdmin = async (

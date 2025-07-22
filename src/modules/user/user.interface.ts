@@ -21,6 +21,7 @@ export type TUser = {
   isDeleted?: boolean; // Changed to boolean
   isBlocked?: boolean;
   isLoggedIn?: boolean;
+  lastLogin?: Date;
   loggedOutTime?: Date;
   passwordChangeTime?: Date;
   fcmToken?: string;

@@ -19,6 +19,7 @@ const UserSchema = new Schema<TUser>(
     isDeleted: { type: Boolean, required: false, default: false },
     isBlocked: { type: Boolean, required: false, default: false },
     isLoggedIn: { type: Boolean, required: false, default: false },
+    lastLogin: { type: Date, required: false },
     loggedOutTime: { type: Date, required: false },
     passwordChangeTime: { type: Date, required: false },
     fcmToken: { type: String, required: false, default: null },
