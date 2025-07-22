@@ -42,10 +42,10 @@ const logIn = async (
   }
 
   // Deny login for blocked/deleted users for normal email login
-  if ((user.isBlocked) && method === 'email_Pass') {
+  if (user.isBlocked && method === 'email_Pass') {
     throw new Error('This user is blocked!');
   }
-  if ((user.isDeleted) && method === 'email_Pass') {
+  if (user.isDeleted && method === 'email_Pass') {
     throw new Error('This user is deleted!');
   }
 
@@ -59,7 +59,10 @@ const logIn = async (
 
   const updatedUser = await UserModel.findOneAndUpdate(
     { email },
-    { isLoggedIn: true },
+    {
+      isLoggedIn: true,
+      lastLogin: new Date(),
+    },
     { new: true },
   );
 
