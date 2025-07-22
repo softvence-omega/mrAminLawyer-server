@@ -37,7 +37,7 @@ caseRoutes.get(
 
 caseRoutes.get(
   "/case/:caseOverviewId",
-  auth([userRole.admin]),
+  auth([userRole.admin, userRole.user]),
   upload.none(),
   caseController.findCaseById
 );

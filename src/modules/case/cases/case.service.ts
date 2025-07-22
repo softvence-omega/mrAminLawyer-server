@@ -1028,36 +1028,80 @@ const findCaseOverviews = async ({
   return { caseOverviews, total, page, limit };
 };
 
+// const findCaseById = async ({
+//   caseOverviewId,
+//   userId,
+// }: CaseByIdQuery): Promise<{
+//   caseOverview: any;
+// }> => {
+//   const query: any = {
+//     _id: new Types.ObjectId(caseOverviewId),
+//     user_id: new Types.ObjectId(userId),
+//     isDeleted: false,
+//   };
+
+//   const caseOverview = await CaseOverviewModel.findOne(query)
+//     .populate({
+//       path: "assetList_id",
+//       select: "assets", // Corrected to match schema field
+//     })
+//     .populate({
+//       path: "timeLine_id",
+//       select: "timeLine", // Include caseTitle if needed
+//     })
+//     .lean()
+//     .exec();
+
+//   if (!caseOverview) {
+//     throw new Error("Case not found");
+//   }
+
+//   return { caseOverview };
+// };
+
 const findCaseById = async ({
   caseOverviewId,
   userId,
-}: CaseByIdQuery): Promise<{
-  caseOverview: any;
-}> => {
+  userRole,
+}: {
+  caseOverviewId: string;
+  userId: string;
+  userRole: string;
+}): Promise<{ caseOverview: any }> => {
+  if (!Types.ObjectId.isValid(caseOverviewId)) {
+    throw new Error("Invalid caseOverviewId");
+  }
+
   const query: any = {
     _id: new Types.ObjectId(caseOverviewId),
-    user_id: new Types.ObjectId(userId),
     isDeleted: false,
   };
+
+  // If user is not admin, restrict to their own cases only
+  if (userRole !== "admin") {
+    // Assuming client_user_id is the owner for user access
+    query.client_user_id = new Types.ObjectId(userId);
+  }
 
   const caseOverview = await CaseOverviewModel.findOne(query)
     .populate({
       path: "assetList_id",
-      select: "assets", // Corrected to match schema field
+      select: "assets",
     })
     .populate({
       path: "timeLine_id",
-      select: "timeLine", // Include caseTitle if needed
+      select: "timeLine caseTitle",
     })
     .lean()
     .exec();
 
   if (!caseOverview) {
-    throw new Error("Case not found");
+    throw new Error("Case not found or access denied");
   }
 
   return { caseOverview };
 };
+
 
 const findAllCasesWithDetails = async ({
   userId,

@@ -172,14 +172,38 @@ const findCaseOverviews = catchAsync(async (req, res) => {
   });
 });
 
+// const findCaseById = catchAsync(async (req, res) => {
+//   const caseOverviewId = req.params.caseOverviewId;
+//   const userId = req.user?.id;
+//   const userRole = req.user?.role;
+
+//   if (userRole !== "admin") {
+//     throw new Error("Only admins can retrieve case details");
+//   }
+//   if (!caseOverviewId || !Types.ObjectId.isValid(caseOverviewId)) {
+//     throw new Error("Invalid or missing caseOverviewId");
+//   }
+//   if (!userId || !Types.ObjectId.isValid(userId)) {
+//     throw new Error("Invalid or missing userId from token");
+//   }
+
+//   const result = await caseService.findCaseById({
+//     caseOverviewId,
+//     userId,
+//   });
+
+//   res.status(200).json({
+//     status: "success",
+//     message: "Case retrieved successfully",
+//     data: result,
+//   });
+// });
+
 const findCaseById = catchAsync(async (req, res) => {
   const caseOverviewId = req.params.caseOverviewId;
   const userId = req.user?.id;
   const userRole = req.user?.role;
 
-  if (userRole !== "admin") {
-    throw new Error("Only admins can retrieve case details");
-  }
   if (!caseOverviewId || !Types.ObjectId.isValid(caseOverviewId)) {
     throw new Error("Invalid or missing caseOverviewId");
   }
@@ -190,6 +214,7 @@ const findCaseById = catchAsync(async (req, res) => {
   const result = await caseService.findCaseById({
     caseOverviewId,
     userId,
+    userRole,
   });
 
   res.status(200).json({
@@ -198,6 +223,7 @@ const findCaseById = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
 
 const findAllCasesWithDetails = catchAsync(async (req, res) => {
   const userId = req.user?.id;
