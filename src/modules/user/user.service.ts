@@ -176,8 +176,10 @@ const setFCMToken = async (user_id: Types.ObjectId, fcmToken: string) => {
 // };
 
 const getAllUsers = async () => {
-  const result = await UserModel.find({ isBlocked: false, isDeleted: false })
-    .lean(); // Use lean for better performance (optional)
+  const result = await UserModel.find({
+    isBlocked: false,
+    isDeleted: false,
+  }).lean(); // Use lean for better performance (optional)
 
   // Fetch profiles with case details for each user
   const usersWithProfiles = await Promise.all(
@@ -192,18 +194,21 @@ const getAllUsers = async () => {
               { path: 'timeLine_id', model: 'TimelineList' },
             ],
           },
-        ]);
+        ])
+        .lean();
+
+      const caseCount = profile?.case_ids ? profile.case_ids?.length : 0;
 
       return {
         ...user,
-        profile, // Add profile with full case details
+        profile,
+        caseCount,
       };
-    })
+    }),
   );
 
   return usersWithProfiles;
 };
-
 
 const getAllProfiles = async () => {
   // Assuming you have a Profile model, fetch all profiles
@@ -294,7 +299,11 @@ const updateProfileData = async (
 
     // ✅ Update User
     if (Object.keys(userFields).length > 0) {
-      await UserModel.findByIdAndUpdate(user_id, { $set: userFields }, { session });
+      await UserModel.findByIdAndUpdate(
+        user_id,
+        { $set: userFields },
+        { session },
+      );
     }
 
     // ✅ Update Profile
@@ -310,7 +319,9 @@ const updateProfileData = async (
     session.endSession();
 
     // ✅ Fetch latest data (with populate)
-    const updatedProfile = await ProfileModel.findOne({ user_id }).populate('user_id');
+    const updatedProfile = await ProfileModel.findOne({ user_id }).populate(
+      'user_id',
+    );
 
     return updatedProfile;
   } catch (error) {
@@ -319,8 +330,6 @@ const updateProfileData = async (
     throw error;
   }
 };
-
-
 
 // const updateProfileData = async (
 //   user_id: Types.ObjectId,
@@ -502,8 +511,6 @@ const getProfile = async (user_id: Types.ObjectId) => {
   return profile;
 };
 
-
-
 // In userServices.ts
 const updateUserByAdmin = async (
   userId: Types.ObjectId,
@@ -563,7 +570,6 @@ const unblockUser = async (userId: string) => {
   return user;
 };
 
-
 const userServices = {
   createUser,
   getAllUsers,
@@ -578,7 +584,7 @@ const userServices = {
   getUserFullDetails,
   setFCMToken,
   blockUser,
-  unblockUser
+  unblockUser,
 };
 
 export default userServices;
