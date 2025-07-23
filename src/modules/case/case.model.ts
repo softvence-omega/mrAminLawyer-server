@@ -6,7 +6,8 @@ const assetSchema = new Schema(
   {
     assetUrl: { type: String, required: true },
     assetName: { type: String, required: true },
-    uploadDate: { type: String, required: true },
+    fileSize: { type: Number, required: true },
+    uploadDate: { type: String, required: false, default: new Date().toISOString() },
   },
   { timestamps: true },
 );
