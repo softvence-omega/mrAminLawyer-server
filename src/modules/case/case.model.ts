@@ -26,6 +26,8 @@ const assetListSchema = new Schema<TAssetList>(
 const timelineSchema = new Schema(
   {
     assetUrl: { type: [String] },
+    assetName: { type: String, required: false },
+    fileSize: { type: Number, required: false },
     title: { type: String, required: true },
     description: { type: String, required: true },
     date: { type: String, required: true },
