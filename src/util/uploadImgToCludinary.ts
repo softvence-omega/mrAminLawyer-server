@@ -185,35 +185,6 @@ export const uploadImgToCloudinary = async (name: string, filePath: string) => {
   }
 };
 
-// Function to upload a PDF to Cloudinary
-export const uploadPdfToCloudinary = async (name: string, filePath: string) => {
-  try {
-    // Verify file exists
-    await fs.access(filePath);
-
-    // Upload PDF to Cloudinary
-    const uploadResult = await cloudinary.uploader.upload(filePath, {
-      public_id: `resumes/${name}-${Date.now()}`,
-      resource_type: "raw", // Explicitly set to "raw" for PDFs
-      // resource_type: "auto", // Explicitly set to "raw" for PDFs
-      type: "upload", // ✅ ensures public access
-      // format: "pdf", // Ensure the format is set to PDF
-    });
-
-    console.log(`PDF uploaded successfully: ${uploadResult.secure_url}`);
-
-    // Delete local file after successful upload
-    await deleteFile(filePath);
-
-    return uploadResult;
-  } catch (error: any) {
-    console.error(`Error uploading PDF to Cloudinary for ${filePath}:`, error);
-    // Attempt to clean up file on failure
-    await deleteFile(filePath);
-    throw new Error(`PDF upload failed: ${error.message}`);
-  }
-};
-
 // Function to handle multiple image uploads
 export const uploadMultipleImages = async (filePaths: string[]) => {
   try {
@@ -229,6 +200,35 @@ export const uploadMultipleImages = async (filePaths: string[]) => {
   } catch (error: any) {
     console.error("Error uploading multiple images:", error);
     throw new Error(`Multiple image upload failed: ${error.message}`);
+  }
+};
+
+// Function to upload a PDF to Cloudinary
+export const uploadPdfToCloudinary = async (name: string, filePath: string) => {
+  try {
+    // Verify file exists
+    await fs.access(filePath);
+
+    // Upload PDF to Cloudinary
+    const uploadResult = await cloudinary.uploader.upload(filePath, {
+      public_id: `resumes/${name}-${Date.now()}`,
+      resource_type: "raw", // Explicitly set to "raw" for PDFs
+      // resource_type: "auto", // Explicitly set to "raw" for PDFs
+      type: "upload", // ✅ ensures public access
+      format: "pdf", // Ensure the format is set to PDF
+    });
+
+    console.log(`PDF uploaded successfully: ${uploadResult.secure_url}`);
+
+    // Delete local file after successful upload
+    await deleteFile(filePath);
+
+    return uploadResult;
+  } catch (error: any) {
+    console.error(`Error uploading PDF to Cloudinary for ${filePath}:`, error);
+    // Attempt to clean up file on failure
+    await deleteFile(filePath);
+    throw new Error(`PDF upload failed: ${error.message}`);
   }
 };
 
