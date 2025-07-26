@@ -235,7 +235,7 @@ const findAllCasesWithDetails = catchAsync(async (req, res) => {
   }
 
   const pageNum = typeof page === "string" ? parseInt(page, 10) : 1;
-  const limitNum = typeof limit === "string" ? parseInt(limit, 10) : 10;
+  const limitNum = typeof limit === "string" ? parseInt(limit, 10) : 1000;
 
   if (isNaN(pageNum) || pageNum < 1) {
     throw new Error("Invalid page number");
