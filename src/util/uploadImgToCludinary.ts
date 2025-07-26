@@ -195,6 +195,9 @@ export const uploadPdfToCloudinary = async (name: string, filePath: string) => {
     const uploadResult = await cloudinary.uploader.upload(filePath, {
       public_id: `resumes/${name}-${Date.now()}`,
       resource_type: "raw", // Explicitly set to "raw" for PDFs
+      // resource_type: "auto", // Explicitly set to "raw" for PDFs
+      type: "upload", // ✅ ensures public access
+      // format: "pdf", // Ensure the format is set to PDF
     });
 
     console.log(`PDF uploaded successfully: ${uploadResult.secure_url}`);
