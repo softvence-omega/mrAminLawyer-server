@@ -188,6 +188,7 @@ const getAllUsers = async () => {
           {
             path: 'case_ids',
             model: 'CaseOverview',
+            match: { isDeleted: false },
             populate: [
               { path: 'assetList_id', model: 'AssetList' },
               { path: 'timeLine_id', model: 'TimelineList' },
