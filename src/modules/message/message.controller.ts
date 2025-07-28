@@ -65,8 +65,14 @@ const getConversation = catchAsync(async (req: Request, res: Response) => {
       currentUserId,
       otherUserId
     );
+
+    // Add `sentByMe` flag
+    const messagesWithSenderFlag = messages.map((msg) => ({
+      ...msg.toObject(), // convert Mongoose doc to plain object
+      sentByMe: msg.sender.toString() === currentUserId.toString(),
+    }));
   
-    res.status(200).json({ chatWith, messages });
+    res.status(200).json({ chatWith, messages: messagesWithSenderFlag });
   });
   
 
