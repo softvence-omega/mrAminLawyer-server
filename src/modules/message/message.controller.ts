@@ -6,6 +6,7 @@ import mongoose, { Types } from 'mongoose';
 import { UserModel } from '../user/user.model';
 import { sendSingleNotification } from '../../firebaseSetup/sendPushNotification';
 import { MessageModel } from './message.model';
+import { uploadImgToCloudinary } from '../../util/uploadImgToCludinary';
 
 const getMessages = catchAsync(async (req: Request, res: Response) => {
   const userId = idConverter(req.user.id);
@@ -292,13 +293,31 @@ const getConversation = catchAsync(async (req: Request, res: Response) => {
   res.status(200).json(result);
 });
 
-  
+const uploadChatFile = catchAsync(async (req: Request, res: Response) => {
+  if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+
+  const name = `${req.user.id}-chat-file`;
+  const result = await uploadImgToCloudinary(name, req.file.path);
+
+  const fileType = req.file.mimetype.startsWith('image')
+    ? 'image'
+    : req.file.mimetype.startsWith('application/pdf')
+    ? 'pdf'
+    : 'file';
+
+  res.status(200).json({
+    fileUrl: result.secure_url,
+    fileType,
+  });
+});
+
 
 const messageController = {
   getMessages,
   sendMessage,
   getConversation,
-  getRecentChats
+  getRecentChats,
+  uploadChatFile
 };
 
 export default messageController;

@@ -101,11 +101,23 @@ export const setupWebSocket = (server: any, jwtSecret: string) => {
       try {
         const msg = JSON.parse(data.toString());
 
-        const saved = await MessageModel.create({
+        // const saved = await MessageModel.create({
+        //   sender: idConverter(ws.userId!) as Types.ObjectId,
+        //   receiver: idConverter(msg.receiverId) as Types.ObjectId,
+        //   text: msg.text,
+        // });
+
+        const messagePayload: any = {
           sender: idConverter(ws.userId!) as Types.ObjectId,
           receiver: idConverter(msg.receiverId) as Types.ObjectId,
-          text: msg.text,
-        });
+        };
+        
+        if (msg.text) messagePayload.text = msg.text;
+        if (msg.fileUrl) messagePayload.fileUrl = msg.fileUrl;
+        if (msg.fileType) messagePayload.fileType = msg.fileType;
+        
+        const saved = await MessageModel.create(messagePayload);
+        
 
         wss.clients.forEach((client) => {
           const authClient = client as AuthenticatedWebSocket;
