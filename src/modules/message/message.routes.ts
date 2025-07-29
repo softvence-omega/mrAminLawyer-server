@@ -18,6 +18,12 @@ messageRouter.get(
 );
 
 messageRouter.get(
+  '/conversation/:id',
+  auth([userRole.admin, userRole.user]),
+  messageController.getConversation,
+);
+
+messageRouter.get(
   '/:id',
   auth([userRole.admin, userRole.user]),
   messageController.getMessages,
@@ -27,12 +33,6 @@ messageRouter.post(
   '/',
   auth([userRole.admin, userRole.user]),
   messageController.sendMessage,
-);
-
-messageRouter.get(
-  '/conversation/:id',
-  auth([userRole.admin, userRole.user]),
-  messageController.getConversation,
 );
 
 export default messageRouter;
