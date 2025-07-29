@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WebSocket File Upload Test</title>
+</head>
+<body>
+  <h2>Send Message with File</h2>
+  <input type="text" id="textMessage" placeholder="Enter message text" />
+  <br><br>
+  <input type="file" id="fileInput" />
+  <br><br>
+  <button onclick="sendMessage()">Send</button>
+
+  <script>
+    const socket = new WebSocket("ws://localhost:8000/ws");
+
+    socket.onopen = () => {
+      console.log("WebSocket connected");
+    };
+
+    socket.onmessage = (event) => {
+      console.log("Received:", event.data);
+    };
+
+    function sendMessage() {
+      const text = document.getElementById("textMessage").value;
+      const file = document.getElementById("fileInput").files[0];
+
+      if (!file) {
+        alert("Please select a file.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function () {
+        const base64Data = reader.result;
+
+        const message = {
+          text,
+          file: base64Data,
+          fileName: file.name,
+          fileType: file.type,
+          receiverId: "RECEIVER_USER_ID_HERE" // Replace with actual receiver
+        };
+
+        socket.send(JSON.stringify(message));
+      };
+
+      reader.readAsDataURL(file); // this converts file to base64
+    }
+  </script>
+</body>
+</html>

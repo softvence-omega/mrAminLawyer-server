@@ -67,6 +67,9 @@ interface AuthenticatedWebSocket extends WebSocket {
   userId?: string;
 }
 
+// Add global map to track connections
+const onlineUsers = new Map<string, AuthenticatedWebSocket>();
+
 export const setupWebSocket = (server: any, jwtSecret: string) => {
   const wss = new WebSocketServer({ server });
 
@@ -79,9 +82,20 @@ export const setupWebSocket = (server: any, jwtSecret: string) => {
     try {
       const decoded = jwt.verify(token, jwtSecret) as any;
       ws.userId = decoded.id;
+      // onlineUsers.set(ws.userId!, ws); // track online
+      // Type-safe check
+      if (ws.userId) {
+        onlineUsers.set(ws.userId, ws);
+      }
     } catch (err) {
-      ws.close();
+      return ws.close();
     }
+
+    ws.on('close', () => {
+      if (ws.userId) {
+        onlineUsers.delete(ws.userId); // track offline
+      }
+    });
 
     ws.on('message', async (data) => {
       try {
@@ -103,7 +117,9 @@ export const setupWebSocket = (server: any, jwtSecret: string) => {
         // --- ONLY FOR CHAT NOTIFICATION ---
 
         // Get receiver's profile
-        const receiverProfile = await ProfileModel.findOne({ user_id: idConverter(msg.receiverId) as Types.ObjectId, });
+        const receiverProfile = await ProfileModel.findOne({
+          user_id: idConverter(msg.receiverId) as Types.ObjectId,
+        });
 
         if (receiverProfile) {
           // Create chat_message notification
@@ -117,7 +133,7 @@ export const setupWebSocket = (server: any, jwtSecret: string) => {
 
           // Update notification list
           await NotificationListModel.findOneAndUpdate(
-            { user_id: idConverter(msg.receiverId) as Types.ObjectId, },
+            { user_id: idConverter(msg.receiverId) as Types.ObjectId },
             {
               $inc: { oldNotificationCount: 1, newNotification: 1 },
               $push: { notificationList: notification._id },
@@ -126,11 +142,15 @@ export const setupWebSocket = (server: any, jwtSecret: string) => {
                 seenNotificationCount: 0,
               },
             },
-            { upsert: true }
+            { upsert: true },
           );
 
           // Send push notification
-          await sendSingleNotification(idConverter(msg.receiverId) as Types.ObjectId, '💬 New Message', msg.text);
+          await sendSingleNotification(
+            idConverter(msg.receiverId) as Types.ObjectId,
+            '💬 New Message',
+            msg.text,
+          );
         }
       } catch (err) {
         console.error('WebSocket message error:', err);
@@ -138,5 +158,5 @@ export const setupWebSocket = (server: any, jwtSecret: string) => {
     });
   });
 
-  return wss;
+  return { wss, onlineUsers };
 };
