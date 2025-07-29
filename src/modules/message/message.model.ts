@@ -5,6 +5,7 @@ export interface IMessage {
   receiver: Types.ObjectId;
   text: string;
   createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const messageSchema = new Schema<IMessage>(

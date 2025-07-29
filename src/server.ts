@@ -6,6 +6,7 @@ import adminSeeder from "./seeder/adminSeeder";
 import startCourtReminderCron from "./util/coateReminderCorn";
 import { setupWebSocket } from './util/webSocket';
 
+
 let server: Server;
 startCourtReminderCron()
 
@@ -19,8 +20,9 @@ async function main() {
     });
 
     // Setup WebSocket after server is ready
-    const wss = setupWebSocket(server, config.jwt_token_secret);
+    const { wss, onlineUsers } = setupWebSocket(server, config.jwt_token_secret);
     app.set('wss', wss);
+    app.set('onlineUsers', onlineUsers)
   } 
   catch (err : any) {
     throw Error('something went wrong in server or mongoose connection');
