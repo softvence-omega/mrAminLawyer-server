@@ -306,7 +306,7 @@ const uploadChatFile = catchAsync(async (req: Request, res: Response) => {
     : 'file';
 
   res.status(200).json({
-    fileUrl: result.secure_url,
+    imageUrl: result.secure_url,
     fileType,
   });
 });
