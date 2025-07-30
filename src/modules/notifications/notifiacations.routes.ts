@@ -29,4 +29,10 @@ notificationRouter.delete(
     notificationController.deleteAdminNotification,
   );
 
+  notificationRouter.patch(
+    '/mark-as-unread/:id',
+    auth([userRole.admin, userRole.user]),
+    notificationController.markAsUnreadNotification
+  );
+
 export default notificationRouter

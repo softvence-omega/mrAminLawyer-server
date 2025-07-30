@@ -110,10 +110,25 @@ const deleteUserNotification = catchAsync(async (req, res) => {
     });
   });
 
+  const markAsUnreadNotification = catchAsync(async (req, res) => {
+    const notification_id = idConverter(req.params.id) as Types.ObjectId;
+    const user_id = req.user.id;
+  
+    const result = await notificationServices.markAsUnread(notification_id as Types.ObjectId, user_id);
+  
+    globalResponseHandler(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Notification marked as unread',
+      data: result,
+    });
+  });
+  
+
 
 const notificationController = {
     getAllNotifications,viewSpecificNotification,sendNotificationFromAdmin,getAllNotificationForAdmin,getNotificationForNotificationBell,
-    deleteUserNotification, deleteAdminNotification
+    deleteUserNotification, deleteAdminNotification, markAsUnreadNotification
 }
 
 

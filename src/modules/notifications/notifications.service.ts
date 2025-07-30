@@ -244,6 +244,20 @@ const deleteAdminNotification = async (notification_id: Types.ObjectId) => {
   return deleted;
 };
 
+const markAsUnread = async (notificationId: Types.ObjectId, userId: string) => {
+  const notification = await NotificationModel.findOneAndUpdate(
+    { _id: notificationId, user_id: userId },
+    { isSeen: false },
+    { new: true }
+  );
+
+  if (!notification) {
+    throw new Error('Notification not found or access denied');
+  }
+
+  return notification;
+};
+
 const notificationServices = {
   getAllNotifications,
   viewSpecificNotification,
@@ -251,7 +265,8 @@ const notificationServices = {
   getAllNotificationForAdmin,
   getNotificationForNotificationBell,
   deleteUserNotification,
-  deleteAdminNotification
+  deleteAdminNotification,
+  markAsUnread
 };
 
 export default notificationServices;
