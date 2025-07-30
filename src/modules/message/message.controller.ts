@@ -62,6 +62,12 @@ const getConversation = catchAsync(async (req: Request, res: Response) => {
     if (!chatWith) {
       return res.status(404).json({ message: 'Chat user not found' });
     }
+
+    // ✅ Mark all unseen messages as seen where receiver is current user
+    await MessageModel.updateMany(
+      { sender: otherUserId, receiver: currentUserId, seen: false },
+      { $set: { seen: true } }
+    );
   
     const messages = await messageService.getMessagesBetweenUsers(
       currentUserId,
@@ -265,6 +271,27 @@ const getConversation = catchAsync(async (req: Request, res: Response) => {
     },
   ]);
 
+  // Unseen counts for each user
+  const unseenCounts = await MessageModel.aggregate([
+    {
+      $match: {
+        receiver: currentUserId,
+        seen: false,
+      },
+    },
+    {
+      $group: {
+        _id: '$sender',
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const unseenMap = new Map<string, number>();
+  unseenCounts.forEach((item) => {
+    unseenMap.set(item._id.toString(), item.count);
+  });
+
   // Step 3: Create a map for quick access
   const lastMessageMap = new Map<string, any>();
   messages.forEach(msg => {
@@ -274,6 +301,7 @@ const getConversation = catchAsync(async (req: Request, res: Response) => {
   // Step 4: Merge user info with last messages
   const result = allUsers.map(user => {
     const msg = lastMessageMap.get(user._id.toString());
+    const unseenCount = unseenMap.get(user._id.toString()) || 0;
 
     return {
       userId: user._id,
@@ -284,6 +312,7 @@ const getConversation = catchAsync(async (req: Request, res: Response) => {
       lastMessageTime: msg?.createdAt || user.createdAt,
       sentByMe: msg?.sender?.toString() === currentUserId.toString(),
       isOnline: onlineUsers.has(user._id.toString()),
+      unseenCount,
     };
   });
 
