@@ -30,7 +30,7 @@ const getAllNotifications = async (user_id: Types.ObjectId) => {
       },
     ],
     {
-      new: true, // Return the updated document
+      new: true,
     },
   ).populate({
     path: 'notificationList',
