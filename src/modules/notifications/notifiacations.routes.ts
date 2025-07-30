@@ -15,5 +15,18 @@ notificationRouter.post("/sendNotificationFromAdmin",auth([userRole.admin]),noti
 
 notificationRouter.get("/getAllNotificationForAdmin",auth([userRole.admin]),notificationController.getAllNotificationForAdmin )
 
+// User: Delete their own notification
+notificationRouter.delete(
+    '/deleteUserNotification/:id',
+    auth([userRole.admin, userRole.user]),
+    notificationController.deleteUserNotification,
+  );
+  
+  // Admin: Delete globally
+  notificationRouter.delete(
+    '/deleteAnyNotification/:id',
+    auth([userRole.admin]),
+    notificationController.deleteAdminNotification,
+  );
 
 export default notificationRouter

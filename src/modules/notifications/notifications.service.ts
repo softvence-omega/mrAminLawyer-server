@@ -201,12 +201,57 @@ const getAllNotificationForAdmin = async (notificationType?: string) => {
   }
 };
 
+const deleteUserNotification = async (
+  user_id: Types.ObjectId | string,
+  notification_id: Types.ObjectId | string,
+) => {
+  const convertedUserId = new Types.ObjectId(user_id);
+  const convertedNotificationId = new Types.ObjectId(notification_id);
+
+  // 1. Remove notification ID from notificationList array for this user
+  await NotificationListModel.findOneAndUpdate(
+    { user_id: convertedUserId },
+    {
+      $pull: { notificationList: convertedNotificationId },
+    },
+    { new: true }, // Return updated doc (optional)
+  );
+
+  // 2. Delete notification document (only if user owns it)
+  const deletedNotification = await NotificationModel.findOneAndDelete({
+    _id: convertedNotificationId,
+    user_id: convertedUserId,
+  });
+
+  // 3. Optional: you can check if both operations succeeded and handle accordingly
+  if (!deletedNotification) {
+    throw new Error('Notification not found or you are not authorized to delete it');
+  }
+
+  return;
+};
+
+const deleteAdminNotification = async (notification_id: Types.ObjectId) => {
+  // Delete notification globally
+  const deleted = await NotificationModel.findByIdAndDelete(notification_id);
+
+  // Clean up from all notification lists
+  await NotificationListModel.updateMany(
+    {},
+    { $pull: { notificationList: notification_id } },
+  );
+
+  return deleted;
+};
+
 const notificationServices = {
   getAllNotifications,
   viewSpecificNotification,
   sendNotificationFromAdmin,
   getAllNotificationForAdmin,
   getNotificationForNotificationBell,
+  deleteUserNotification,
+  deleteAdminNotification
 };
 
 export default notificationServices;
