@@ -6,6 +6,7 @@ export interface IMessage {
   text: string;
   imageUrl?: string;
   fileType?: string;
+  seen?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -17,6 +18,7 @@ const messageSchema = new Schema<IMessage>(
     text: { type: String, required: true },
     imageUrl: { type: String, required: false },
     fileType: { type: String, required: false },
+    seen: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
