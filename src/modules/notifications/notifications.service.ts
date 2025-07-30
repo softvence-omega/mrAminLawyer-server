@@ -35,6 +35,10 @@ const getAllNotifications = async (user_id: Types.ObjectId) => {
   ).populate({
     path: 'notificationList',
     options: { sort: { createdAt: -1 } }, // Sort notifications by createdAt descending
+    populate: {
+      path: 'Profile_id', // This will populate each notification's Profile
+      select: 'img', // Only bring profileImage field
+    },
   });
 
   return updatedNotificationList;
