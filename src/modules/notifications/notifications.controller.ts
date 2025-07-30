@@ -45,7 +45,7 @@ const viewSpecificNotification = catchAsync(async(req, res)=>{
     globalResponseHandler(res, {
         statusCode: 200,
         success: true,
-        message: 'founbd single notification',
+        message: 'Found single notification',
         data: result,
       });
 })
