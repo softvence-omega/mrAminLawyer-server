@@ -23,4 +23,11 @@ const messageSchema = new Schema<IMessage>(
   { timestamps: true }
 );
 
+messageSchema.pre('validate', function (next) {
+  if (!this.text && !this.fileUrl) {
+    return next(new Error('A message must contain either text or a file.'));
+  }
+  next();
+});
+
 export const MessageModel = model<IMessage>('Message', messageSchema);

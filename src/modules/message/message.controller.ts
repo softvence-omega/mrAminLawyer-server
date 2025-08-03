@@ -26,18 +26,16 @@ const getMessages = catchAsync(async (req: Request, res: Response) => {
 
 // const sendMessage = catchAsync(async (req: Request, res: Response) => {
 //   const senderId = idConverter(req.user.id);
-//   const { receiverId, text, fileUrl, fileType } = req.body;
+//   const { receiverId, text } = req.body;
 
-//   if (!senderId || !receiverId || !text && !fileUrl ) {
+//   if (!senderId || !receiverId || !text) {
 //     return res.status(400).json({ message: 'Missing fields' });
 //   }
 
 //   const message = await messageService.saveMessage(
 //     senderId as Types.ObjectId,
 //     idConverter(receiverId) as Types.ObjectId,
-//     text,
-//     fileUrl,
-//     fileType
+//     text
 //   );
 
 //   req.app.get('wss').clients.forEach((client: any) => {
@@ -58,15 +56,16 @@ const sendMessage = catchAsync(async (req: Request, res: Response) => {
   if (!senderId || !receiverId) {
     return res.status(400).json({ message: 'Sender or Receiver ID missing' });
   }
-
-  if (!text && !fileUrl) {
-    return res.status(400).json({ message: 'Must include either text or file' });
+  
+  // ✅ Enforce: must include at least text or file
+  if (!text?.trim() && !fileUrl) {
+    return res.status(400).json({ message: 'Message must contain text or file' });
   }
-
+  
   const message = await messageService.saveMessage(
     senderId as Types.ObjectId,
     idConverter(receiverId) as Types.ObjectId,
-    text || null,
+    text?.trim() || null,
     fileUrl || null,
     fileType || null
   );
