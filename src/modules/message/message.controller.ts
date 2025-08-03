@@ -24,20 +24,50 @@ const getMessages = catchAsync(async (req: Request, res: Response) => {
   res.status(200).json(messages);
 });
 
+// const sendMessage = catchAsync(async (req: Request, res: Response) => {
+//   const senderId = idConverter(req.user.id);
+//   const { receiverId, text } = req.body;
+
+//   if (!senderId || !receiverId || !text) {
+//     return res.status(400).json({ message: 'Missing fields' });
+//   }
+
+//   const message = await messageService.saveMessage(
+//     senderId as Types.ObjectId,
+//     idConverter(receiverId) as Types.ObjectId,
+//     text
+//   );
+
+//   req.app.get('wss').clients.forEach((client: any) => {
+//     if (client.userId === receiverId && client.readyState === 1) {
+//       client.send(JSON.stringify(message));
+//     }
+//   });
+
+//   await sendSingleNotification(senderId, 'You have a message', `Dear, you have just got a new message from ${req.user.name}`);
+
+//   res.status(201).json(message);
+// });
+
 const sendMessage = catchAsync(async (req: Request, res: Response) => {
   const senderId = idConverter(req.user.id);
   const { receiverId, text, fileUrl, fileType } = req.body;
 
-  if (!senderId || !receiverId || !text && fileUrl ) {
-    return res.status(400).json({ message: 'Missing fields' });
+  if (!senderId || !receiverId) {
+    return res.status(400).json({ message: 'Sender or Receiver ID missing' });
   }
-
+  
+  // ✅ Enforce: must include at least text or file
+  if (!text?.trim() && !fileUrl) {
+    return res.status(400).json({ message: 'Message must contain text or file' });
+  }
+  
   const message = await messageService.saveMessage(
     senderId as Types.ObjectId,
     idConverter(receiverId) as Types.ObjectId,
-    text,
-    fileUrl,
-    fileType
+    text?.trim() || null,
+    fileUrl || null,
+    fileType || null
   );
 
   req.app.get('wss').clients.forEach((client: any) => {
@@ -50,6 +80,7 @@ const sendMessage = catchAsync(async (req: Request, res: Response) => {
 
   res.status(201).json(message);
 });
+
 
 const getConversation = catchAsync(async (req: Request, res: Response) => {
     const currentUserId = idConverter(req.user.id);
