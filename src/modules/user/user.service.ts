@@ -23,6 +23,11 @@ const createUser = async (
     throw new Error('You must agree to the terms and conditions to register.');
   }
 
+  // ✅ Normalize phone to German code if not already set
+if (payload.phone && !payload.phone.startsWith('+')) {
+  payload.phone = `+49${payload.phone}`;
+}
+
   // Check for existing user
   // console.log('Checking if user exists');
   const existingUser = await UserModel.findOne({ email: payload.email }).select(
