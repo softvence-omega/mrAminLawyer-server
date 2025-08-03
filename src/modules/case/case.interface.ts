@@ -32,13 +32,13 @@ export type TCaseOverview = {
   client_user_id: Types.ObjectId; // Client associated with the case
   clientName: string;
   caseTitle: string;
-  caseType:
-    | 'Traffic_Violation'
-    | 'License_Suspension'
-    | 'Reckless_Driving'
-    | 'Hit_and_Run'
-    | 'Driving_without_license'
-    | 'Parking_Violation';
+  caseType: string;
+    // | 'Traffic_Violation'
+    // | 'License_Suspension'
+    // | 'Reckless_Driving'
+    // | 'Hit_and_Run'
+    // | 'Driving_without_license'
+    // | 'Parking_Violation';
   case_status:
     | 'Letter_sent_to_insurance'
     | 'In_Progress'

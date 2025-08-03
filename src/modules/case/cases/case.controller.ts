@@ -38,8 +38,8 @@ const manageCase = catchAsync(async (req, res) => {
   } else if (userRole === "admin") {
     if (!payLoad.caseOverviewId) {
       // New case creation
-      if (!payLoad.client_user_id || !payLoad.clientName || !payLoad.caseTitle || !payLoad.caseType || !payLoad.caseStatus || !payLoad.vehicleNumber) {
-        throw new Error("client_user_id, clientName, caseTitle, caseType, and caseStatus are required for new case");
+      if (!payLoad.client_user_id || !payLoad.clientName || !payLoad.caseTitle || !payLoad.caseStatus || !payLoad.vehicleNumber) {
+        throw new Error("client_user_id, clientName, caseTitle, and caseStatus are required for new case");
       }
       if (!Types.ObjectId.isValid(payLoad.client_user_id)) {
         throw new Error("Invalid client_user_id");
