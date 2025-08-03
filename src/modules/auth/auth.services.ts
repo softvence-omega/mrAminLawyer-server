@@ -9,7 +9,6 @@ import userServices from '../user/user.service';
 import { Types } from 'mongoose';
 import { error } from 'console';
 
-
 const logIn = async (
   email: string | undefined,
   phone: string | undefined,
@@ -19,6 +18,11 @@ const logIn = async (
   // ✅ Ensure at least one identifier is provided
   if (!email && !phone) {
     throw new Error('Email or phone is required');
+  }
+
+  // ✅ Automatically prepend German code if missing
+  if (phone && !phone.startsWith('+')) {
+    phone = `+49${phone}`;
   }
 
   // ✅ Build filter based on which one is present
@@ -110,8 +114,6 @@ const logIn = async (
   return { approvalToken, refreshToken, updatedUser, message };
 };
 
-
-
 // const logIn = async (
 //   email: string,
 //   password: string,
@@ -197,8 +199,6 @@ const logIn = async (
 
 //   return { approvalToken, refreshToken, updatedUser, message };
 // };
-
-
 
 const logOut = async (userId: string) => {
   const convertedId = idConverter(userId);
