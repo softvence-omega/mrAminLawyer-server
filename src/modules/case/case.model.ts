@@ -57,15 +57,16 @@ const caseOverviewSchema = new Schema(
     caseTitle: { type: String, required: true },
     caseType: {
       type: String,
-      enum: [
-        'Traffic_Violation',
-        'License_Suspension',
-        'Reckless_Driving',
-        'Hit_and_Run',
-        'Driving_without_license',
-        'Parking_Violation',
-      ],
-      required: true,
+      // enum: [
+      //   'Traffic_Violation',
+      //   'License_Suspension',
+      //   'Reckless_Driving',
+      //   'Hit_and_Run',
+      //   'Driving_without_license',
+      //   'Parking_Violation',
+      // ],
+      required: false,
+      default: 'Traffic Accident',
     },
     case_status: {
       type: String,

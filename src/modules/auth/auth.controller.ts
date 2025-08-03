@@ -4,8 +4,8 @@ import idConverter from '../../util/idConverter';
 import authServices from './auth.services';
 
 const logIn = catchAsync(async (req, res) => {
-  const { email, password, method } = req.body;
-  const result = await authServices.logIn(email, password, method);
+  const { email, phone, password, method } = req.body;
+  const result = await authServices.logIn(email, phone, password, method);
   const { approvalToken, refreshToken, updatedUser, message } = result;
 
   res.status(200).json({

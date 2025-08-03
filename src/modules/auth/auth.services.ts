@@ -9,39 +9,53 @@ import userServices from '../user/user.service';
 import { Types } from 'mongoose';
 import { error } from 'console';
 
+
 const logIn = async (
-  email: string,
+  email: string | undefined,
+  phone: string | undefined,
   password: string,
   method: 'google' | 'email_Pass' | 'facebook' = 'email_Pass',
 ) => {
-  let user = await UserModel.findOne({ email }).select('+password');
+  // ✅ Ensure at least one identifier is provided
+  if (!email && !phone) {
+    throw new Error('Email or phone is required');
+  }
 
+  // ✅ Build filter based on which one is present
+  const filter = email ? { email } : { phone };
+
+  // ✅ Try to find the user by email or phone
+  let user = await UserModel.findOne(filter).select('+password');
+
+  // ✅ Handle social login: auto-create user if not found
   if (
     (user?.isBlocked || user?.isDeleted || !user) &&
     (method === 'google' || method === 'facebook')
   ) {
     await userServices.createUser(
       {
-        email,
+        ...(email ? { email } : { phone }),
         agreedToTerms: true,
       },
       method,
     );
 
-    // Re-fetch new user
-    user = await UserModel.findOne({ email }).select('+password');
+    // Re-fetch user after creation
+    user = await UserModel.findOne(filter).select('+password');
 
     if (!user) {
       throw new Error('User creation failed');
     }
   }
 
-  // If still no user (and not a social login), throw error
+  // ✅ User must exist by now (non-social login)
   if (!user) {
-    throw new Error('No user found with this email');
+    throw new Error(
+      `No user found with this ${email ? 'email' : 'phone number'}`,
+    );
   }
 
-  // Deny login for blocked/deleted users for normal email login
+  // ✅ Blocked/deleted checks for email/password login
   if (user.isBlocked && method === 'email_Pass') {
     throw new Error('This user is blocked!');
   }
@@ -49,7 +63,7 @@ const logIn = async (
     throw new Error('This user is deleted!');
   }
 
-  // Password check for email login
+  // ✅ Password check for email/phone login
   if (method === 'email_Pass') {
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
@@ -57,8 +71,9 @@ const logIn = async (
     }
   }
 
+  // ✅ Update login status
   const updatedUser = await UserModel.findOneAndUpdate(
-    { email },
+    filter,
     {
       isLoggedIn: true,
       lastLogin: new Date(),
@@ -89,11 +104,101 @@ const logIn = async (
 
   if (!user.OTPVerified) {
     message =
-      'you are not a verified user. You wont be able to use some services. Please verify';
+      'you are not a verified user. You won’t be able to use some services. Please verify';
   }
 
   return { approvalToken, refreshToken, updatedUser, message };
 };
+
+
+
+// const logIn = async (
+//   email: string,
+//   password: string,
+//   method: 'google' | 'email_Pass' | 'facebook' = 'email_Pass',
+// ) => {
+//   let user = await UserModel.findOne({ email }).select('+password');
+
+//   if (
+//     (user?.isBlocked || user?.isDeleted || !user) &&
+//     (method === 'google' || method === 'facebook')
+//   ) {
+//     await userServices.createUser(
+//       {
+//         email,
+//         agreedToTerms: true,
+//       },
+//       method,
+//     );
+
+//     // Re-fetch new user
+//     user = await UserModel.findOne({ email }).select('+password');
+
+//     if (!user) {
+//       throw new Error('User creation failed');
+//     }
+//   }
+
+//   // If still no user (and not a social login), throw error
+//   if (!user) {
+//     throw new Error('No user found with this email');
+//   }
+
+//   // Deny login for blocked/deleted users for normal email login
+//   if (user.isBlocked && method === 'email_Pass') {
+//     throw new Error('This user is blocked!');
+//   }
+//   if (user.isDeleted && method === 'email_Pass') {
+//     throw new Error('This user is deleted!');
+//   }
+
+//   // Password check for email login
+//   if (method === 'email_Pass') {
+//     const match = await bcrypt.compare(password, user.password);
+//     if (!match) {
+//       throw new Error('Password is not matched');
+//     }
+//   }
+
+//   const updatedUser = await UserModel.findOneAndUpdate(
+//     { email },
+//     {
+//       isLoggedIn: true,
+//       lastLogin: new Date(),
+//     },
+//     { new: true },
+//   );
+
+//   const tokenizeData = {
+//     id: user._id.toHexString(),
+//     role: user.role,
+//     username: updatedUser?.name,
+//     OTPVerified: updatedUser?.OTPVerified,
+//   };
+
+//   const approvalToken = authUtil.createToken(
+//     tokenizeData,
+//     config.jwt_token_secret,
+//     config.token_expiresIn,
+//   );
+
+//   const refreshToken = authUtil.createToken(
+//     tokenizeData,
+//     config.jwt_refresh_Token_secret,
+//     config.refresh_expiresIn,
+//   );
+
+//   let message = 'access_all';
+
+//   if (!user.OTPVerified) {
+//     message =
+//       'you are not a verified user. You wont be able to use some services. Please verify';
+//   }
+
+//   return { approvalToken, refreshToken, updatedUser, message };
+// };
+
+
 
 const logOut = async (userId: string) => {
   const convertedId = idConverter(userId);
