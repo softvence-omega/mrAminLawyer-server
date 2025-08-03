@@ -111,13 +111,12 @@ export const setupWebSocket = (server: any, jwtSecret: string) => {
           sender: idConverter(ws.userId!) as Types.ObjectId,
           receiver: idConverter(msg.receiverId) as Types.ObjectId,
         };
-        
+
         if (msg.text) messagePayload.text = msg.text;
         if (msg.fileUrl) messagePayload.fileUrl = msg.fileUrl;
         if (msg.fileType) messagePayload.fileType = msg.fileType;
-        
+
         const saved = await MessageModel.create(messagePayload);
-        
 
         wss.clients.forEach((client) => {
           const authClient = client as AuthenticatedWebSocket;
@@ -158,11 +157,13 @@ export const setupWebSocket = (server: any, jwtSecret: string) => {
           );
 
           // Send push notification
-          await sendSingleNotification(
-            idConverter(msg.receiverId) as Types.ObjectId,
-            '💬 New Message',
-            msg.text,
-          );
+          if (ws.userId !== msg.receiverId) {
+            await sendSingleNotification(
+              idConverter(msg.receiverId) as Types.ObjectId,
+              '💬 New Message',
+              msg.text,
+            );
+          }
         }
       } catch (err) {
         console.error('WebSocket message error:', err);
