@@ -4,7 +4,7 @@ export interface IMessage {
   sender: Types.ObjectId;
   receiver: Types.ObjectId;
   text: string;
-  imageUrl?: string;
+  fileUrl?: string;
   fileType?: string;
   seen?: boolean;
   createdAt?: Date;
@@ -16,7 +16,7 @@ const messageSchema = new Schema<IMessage>(
     sender: { type: Schema.Types.ObjectId, ref: 'UserCollection', required: true },
     receiver: { type: Schema.Types.ObjectId, ref: 'UserCollection', required: true },
     text: { type: String, required: true },
-    imageUrl: { type: String, required: false },
+    fileUrl: { type: String, required: false },
     fileType: { type: String, required: false },
     seen: { type: Boolean, default: false },
   },
