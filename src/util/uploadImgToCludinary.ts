@@ -140,6 +140,7 @@ import path from "path";
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs/promises";
 import config from "../config";
+import { v4 as uuidv4 } from 'uuid';
 
 // Configure Cloudinary once at module level
 cloudinary.config({
@@ -165,9 +166,11 @@ export const uploadImgToCloudinary = async (name: string, filePath: string) => {
     // Verify file exists
     await fs.access(filePath);
 
+    const uniqueName = `${name}-${uuidv4()}`;
+
     // Upload image to Cloudinary
     const uploadResult = await cloudinary.uploader.upload(filePath, {
-      public_id: name,
+      public_id: uniqueName,
       resource_type: "image",
     });
 
