@@ -1480,7 +1480,7 @@ const manageCase = async (
       if (!payload.caseOverviewId) {
         // Create new case
         if (!payload.client_user_id || !payload.clientName || !payload.caseTitle || !payload.caseStatus || !payload.vehicleNumber) {
-          throw new Error("client_user_id, clientName, caseTitle, caseType, caseStatus, and vehicleNumber are required for new case");
+          throw new Error("client_user_id, clientName, caseTitle, caseStatus, and vehicleNumber are required for new case");
         }
         if (!Types.ObjectId.isValid(payload.client_user_id)) {
           throw new Error("Invalid client_user_id");
