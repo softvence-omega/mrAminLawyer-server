@@ -157,13 +157,13 @@ export const setupWebSocket = (server: any, jwtSecret: string) => {
           );
 
           // Send push notification
-          if (ws.userId !== msg.receiverId) {
-            await sendSingleNotification(
-              idConverter(msg.receiverId) as Types.ObjectId,
-              '💬 New Message',
-              msg.text,
-            );
-          }
+          // if (ws.userId !== msg.receiverId) {
+          //   await sendSingleNotification(
+          //     idConverter(msg.receiverId) as Types.ObjectId,
+          //     '💬 New Message',
+          //     msg.text,
+          //   );
+          // }
         }
       } catch (err) {
         console.error('WebSocket message error:', err);
