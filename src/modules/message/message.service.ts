@@ -10,8 +10,9 @@ const getMessagesBetweenUsers = async (senderId: Types.ObjectId, receiverId: Typ
   }).sort({ createdAt: 1 });
 };
 
-const saveMessage = async (senderId: Types.ObjectId, receiverId: Types.ObjectId, text: string) => {
-  return MessageModel.create({ sender: senderId, receiver: receiverId, text });
+const saveMessage = async (senderId: Types.ObjectId, receiverId: Types.ObjectId, text: string, fileUrl?: string,
+  fileType?: string) => {
+  return MessageModel.create({ sender: senderId, receiver: receiverId, text, fileType, fileUrl });
 };
 
 export default {

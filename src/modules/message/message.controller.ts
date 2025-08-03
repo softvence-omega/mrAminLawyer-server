@@ -26,16 +26,18 @@ const getMessages = catchAsync(async (req: Request, res: Response) => {
 
 const sendMessage = catchAsync(async (req: Request, res: Response) => {
   const senderId = idConverter(req.user.id);
-  const { receiverId, text } = req.body;
+  const { receiverId, text, fileUrl, fileType } = req.body;
 
-  if (!senderId || !receiverId || !text) {
+  if (!senderId || !receiverId || !text && fileUrl ) {
     return res.status(400).json({ message: 'Missing fields' });
   }
 
   const message = await messageService.saveMessage(
     senderId as Types.ObjectId,
     idConverter(receiverId) as Types.ObjectId,
-    text
+    text,
+    fileUrl,
+    fileType
   );
 
   req.app.get('wss').clients.forEach((client: any) => {
