@@ -6,8 +6,8 @@ const adminSeeder = async () => {
   const admin = {
     name: 'Admin',
     phone: '+490123456789',
-    password: '12121212',
-    confirmPassword: '12121212',
+    password: '123456',
+    confirmPassword: '123456',
     email: 'aminmuratkasim7@gmail.com',
     role: userRole.admin,
     agreedToTerms: true,
