@@ -31,7 +31,7 @@ const UserSchema = new Schema<TUser>(
 const ProfileSchema = new Schema<TProfile>(
   {
     name: { type: String, required: true },
-    phone: { type: String, required: true },
+    phone: { type: String, required: false, default: null },
     email: { type: String, required: true },
     img: {
       type: String,
