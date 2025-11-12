@@ -4,10 +4,10 @@ import userServices from '../modules/user/user.service';
 
 const adminSeeder = async () => {
   const admin = {
-    name: 'Mr. Amin',
-    phone: '015208587885',
-    password: '123456',
-    confirmPassword: '123456',
+    name: 'Admin',
+    phone: '+490123456789',
+    password: '12121212',
+    confirmPassword: '12121212',
     email: 'aminmuratkasim7@gmail.com',
     role: userRole.admin,
     agreedToTerms: true,
