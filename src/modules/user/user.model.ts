@@ -7,7 +7,7 @@ const UserSchema = new Schema<TUser>(
   {
     img: { type: String, required: false },
     name: { type: String, required: true },
-    phone: { type: String, required: false },
+    phone: { type: String, required: false, default: null},
     email: { type: String, required: true },
     password: { type: String, required: true },
     confirmPassword: { type: String, required: false },
