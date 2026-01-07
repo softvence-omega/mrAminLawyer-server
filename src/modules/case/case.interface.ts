@@ -40,10 +40,13 @@ export type TCaseOverview = {
     // | 'Driving_without_license'
     // | 'Parking_Violation';
   case_status:
-    | 'Letter_sent_to_insurance'
-    | 'In_Progress'
-    | 'Closed'
-    | 'Pending';
+    | 'In Bearbeitung'
+    | 'Fall bei der Versicherung eingereicht'
+    | 'Fall abgeschlossen'
+    | 'Entscheidung der Versicherung noch ausstehend'
+    | 'Vorschadenproblematik'
+    | 'Ermittlungsakte wurde angefordert'
+    | 'Versicherungsnehmer hat Schaden noch nicht gemeldet';
   coatDate?: string;
   note?: string;
   assetList_id?: Types.ObjectId;
