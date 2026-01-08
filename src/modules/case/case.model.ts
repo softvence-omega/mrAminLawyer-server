@@ -70,7 +70,14 @@ const caseOverviewSchema = new Schema(
     },
     case_status: {
       type: String,
-      enum: ['Letter_sent_to_insurance', 'In_Progress', 'Closed', 'Pending'],
+      enum: [ 'In Bearbeitung'
+    , 'Fall bei der Versicherung eingereicht'
+    , 'Fall abgeschlossen'
+    , 'Entscheidung der Versicherung noch ausstehend'
+    , 'Vorschadenproblematik'
+    , 'Ermittlungsakte wurde angefordert'
+    , 'Versicherungsnehmer hat Schaden noch nicht gemeldet'],
+    
       required: true,
     },
     coatDate: { type: String },
