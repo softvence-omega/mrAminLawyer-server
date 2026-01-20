@@ -530,17 +530,9 @@ const send_OTP = async (user_id: Types.ObjectId) => {
 };
 
 const reSend_OTP = async (token: string) => {
-
-  console.log("🚀 ~ auth.services.ts:532 ~ reSend_OTP ~ token:", token)
-
   const decodedToken = authUtil.decodeAuthorizationToken(token);
 
-  console.log("🚀 ~ auth.services.ts:536 ~ reSend_OTP ~ decodedToken:", decodedToken)
-
   const { email } = decodedToken as JwtPayload;
-
-  console.log("🚀 ~ auth.services.ts:540 ~ reSend_OTP ~ email:", email)
-
 
   const findUser = await UserModel.findOne({ email: email });
   console.log('i am find user', findUser);
