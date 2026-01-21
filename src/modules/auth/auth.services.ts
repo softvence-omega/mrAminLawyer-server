@@ -89,6 +89,7 @@ const logIn = async (
     id: user._id.toHexString(),
     role: user.role,
     username: updatedUser?.name,
+    email: updatedUser?.email,
     OTPVerified: updatedUser?.OTPVerified,
   };
 
@@ -317,6 +318,7 @@ const refreshToken = async (refreshToken: string) => {
   const JwtPayload = {
     id: findUser.id,
     role: role,
+    email: findUser.email,
   };
   const approvalToken = authUtil.createToken(
     JwtPayload,
@@ -529,6 +531,7 @@ const send_OTP = async (user_id: Types.ObjectId) => {
 
 const reSend_OTP = async (token: string) => {
   const decodedToken = authUtil.decodeAuthorizationToken(token);
+
   const { email } = decodedToken as JwtPayload;
 
   const findUser = await UserModel.findOne({ email: email });

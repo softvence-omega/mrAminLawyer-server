@@ -142,7 +142,12 @@ const send_OTP = catchAsync(async (req, res) => {
 const reSend_OTP = catchAsync(async (req, res) => {
   const resendOTPToken = req.body.resendOTPToken as string;
 
-  console.log('yooooo', reSend_OTP);
+  if (!resendOTPToken) {
+    return res.status(400).json({
+      success: false,
+      message: 'resendOTPToken is required in the request body',
+    });
+  }
 
   const result = await authServices.reSend_OTP(resendOTPToken);
   res.status(200).json({

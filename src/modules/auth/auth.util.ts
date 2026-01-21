@@ -26,7 +26,12 @@ const decodeToken = (token: string, secret: Secret) => {
 };
 
 const decodeAuthorizationToken = (token: string) =>
-  decodeToken(token, config.jwt_token_secret);
+{ const decoded= decodeToken(token, config.jwt_token_secret);
+
+console.log("🚀 ~ auth.util.ts:31 ~ decodeAuthorizationToken ~ decoded:", decoded)
+
+
+return decoded}
 
 const decodeRefreshToken = (token: string) =>
   decodeToken(token, config.jwt_refresh_Token_secret);
