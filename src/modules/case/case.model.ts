@@ -7,7 +7,11 @@ const assetSchema = new Schema(
     assetUrl: { type: String, required: true },
     assetName: { type: String, required: true },
     fileSize: { type: Number, required: true },
-    uploadDate: { type: String, required: false, default: new Date().toISOString() },
+    uploadDate: {
+      type: String,
+      required: false,
+      default: new Date().toISOString(),
+    },
   },
   { timestamps: true },
 );
@@ -70,14 +74,18 @@ const caseOverviewSchema = new Schema(
     },
     case_status: {
       type: String,
-      enum: [ 'In Bearbeitung'
-    , 'Fall bei der Versicherung eingereicht'
-    , 'Fall abgeschlossen'
-    , 'Entscheidung der Versicherung noch ausstehend'
-    , 'Vorschadenproblematik'
-    , 'Ermittlungsakte wurde angefordert'
-    , 'Versicherungsnehmer hat Schaden noch nicht gemeldet'],
-    
+      enum: [
+        'In Bearbeitung',
+        'Fall bei der Versicherung eingereicht',
+        'Fall abgeschlossen',
+        'Entscheidung der Versicherung noch ausstehend',
+        'Vorschadenproblematik',
+        'Ermittlungsakte wurde angefordert',
+        'Fragebogen ausstehend',
+        'Nachbesichtigung fehlt',
+        'Versicherungsnehmer hat Schaden noch nicht gemeldet',
+      ],
+
       required: true,
     },
     coatDate: { type: String },
