@@ -7,7 +7,7 @@ const UserSchema = new Schema<TUser>(
   {
     img: { type: String, required: false },
     name: { type: String, required: true },
-    phone: { type: String, required: false, default: null},
+    phone: { type: String, required: false, default: null },
     email: { type: String, required: true },
     password: { type: String, required: true },
     confirmPassword: { type: String, required: false },
@@ -22,7 +22,7 @@ const UserSchema = new Schema<TUser>(
     lastLogin: { type: Date, required: false },
     loggedOutTime: { type: Date, required: false },
     passwordChangeTime: { type: Date, required: false },
-    fcmToken: { type: String, required: false, default: null },
+    fcmTokens: { type: [String], required: false, default: [] },
     notificationsEnabled: { type: Boolean, default: true },
   },
   { timestamps: true },

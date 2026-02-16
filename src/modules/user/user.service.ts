@@ -24,9 +24,9 @@ const createUser = async (
   }
 
   // ✅ Normalize phone to German code if not already set
-if (payload.phone && !payload.phone.startsWith('+')) {
-  payload.phone = `+49${payload.phone}`;
-}
+  if (payload.phone && !payload.phone.startsWith('+')) {
+    payload.phone = `+49${payload.phone}`;
+  }
 
   // Check for existing user
   // console.log('Checking if user exists');
@@ -167,7 +167,7 @@ const setFCMToken = async (user_id: Types.ObjectId, fcmToken: string) => {
       _id: user_id,
     },
     {
-      fcmToken: fcmToken,
+      $addToSet: { fcmTokens: fcmToken },
     },
     { new: true },
   );
