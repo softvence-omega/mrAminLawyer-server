@@ -1,5 +1,5 @@
-import { Types } from "mongoose";
-import { boolean } from "zod";
+import { Types } from 'mongoose';
+import { boolean } from 'zod';
 
 // Assuming TUserRole is an enum based on previous context
 export type TUserRole = 'admin' | 'user';
@@ -7,7 +7,7 @@ export type TUserRole = 'admin' | 'user';
 export type TInterviewsAvailable = number | 'unlimited';
 
 export type TUser = {
-  img?:string,
+  img?: string;
   name: string;
   phone?: string;
   email: string;
@@ -24,7 +24,7 @@ export type TUser = {
   lastLogin?: Date;
   loggedOutTime?: Date;
   passwordChangeTime?: Date;
-  fcmToken?: string;
+  fcmTokens?: string[];
   notificationsEnabled?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
@@ -36,7 +36,7 @@ export type TProfile = {
   email: string;
   img?: string;
   emailNotification: boolean;
-  case_ids?:[Types.ObjectId];
+  case_ids?: [Types.ObjectId];
   user_id: Types.ObjectId;
   notificationList_id?: Types.ObjectId;
   isDeleted?: boolean;

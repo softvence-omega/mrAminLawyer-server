@@ -15,30 +15,51 @@ export const sendSingleNotification = async (
   try {
     // Await MongoDB query to find user
     const user = await UserModel.findById(userId).exec();
-    if (!user || !user.fcmToken) {
+    if (!user) {
       return {
         success: false,
-        message: `No user or FCM token found for userId: ${userId}`,
-      };
-    }
-    if (!user.notificationsEnabled || !user.fcmToken) {
-      return {
-        success: false,
-        message: `Notifications are disabled or no FCM token for userId: ${userId}`,
+        message: `User not found for userId: ${userId}`,
       };
     }
 
-    console.log('fcm token :::::: ', user.fcmToken);
-    const message = {
-      notification: {
-        title,
-        body,
-      },
-      token: user.fcmToken, 
-    };
+    console.log('fcm tokens :::::: ', user.fcmTokens);
 
-    // Await Firebase notification send
-    await admin.messaging().send(message);
+    if (!user.notificationsEnabled) {
+      return {
+        success: false,
+        message: `Notifications are disabled for userId: ${userId}`,
+      };
+    }
+
+    if (!user.fcmTokens || user.fcmTokens.length === 0) {
+      return {
+        success: false,
+        message: `No FCM tokens found for userId: ${userId}`,
+      };
+    }
+
+    const sendPromises = user.fcmTokens.map((token) => {
+      const message = {
+        notification: {
+          title,
+          body,
+        },
+        token,
+      };
+      return admin.messaging().send(message);
+    });
+
+    // Await all notification sends
+    const results = await Promise.allSettled(sendPromises);
+
+    const successCount = results.filter((r) => r.status === 'fulfilled').length;
+    console.log(
+      `Successfully sent ${successCount}/${results.length} notifications`,
+    );
+
+    if (successCount === 0 && results.length > 0) {
+      return { success: false, message: 'Failed to send to all devices' };
+    }
 
     // Get the user's profile (if applicable)
     const profile = await ProfileModel.findOne({ user_id: userId });
@@ -86,14 +107,17 @@ export const sendMultipleNotifications = async (
 }> => {
   try {
     const users = await UserModel.find({
-      userId: { $in: userIds },
+      _id: { $in: userIds },
       notificationsEnabled: true,
-      fcmToken: { $ne: null },
+      fcmTokens: { $exists: true, $not: { $size: 0 } },
     }).exec();
 
-    const tokens = users
-      .filter((user) => user.fcmToken)
-      .map((user) => user.fcmToken);
+    const tokens = users.reduce((acc: string[], user) => {
+      if (user.fcmTokens && user.fcmTokens.length > 0) {
+        acc.push(...user.fcmTokens);
+      }
+      return acc;
+    }, []);
 
     if (tokens.length === 0) {
       return {
@@ -126,8 +150,8 @@ export const sendMultipleNotifications = async (
 
     if (failedTokens.length > 0) {
       await UserModel.updateMany(
-        { fcmToken: { $in: failedTokens } },
-        { $set: { fcmToken: null } },
+        { fcmTokens: { $in: failedTokens } },
+        { $pull: { fcmTokens: { $in: failedTokens } } },
       ).exec();
       console.log(`Cleared ${failedTokens.length} invalid FCM tokens`);
     }

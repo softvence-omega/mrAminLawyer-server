@@ -23,7 +23,7 @@ export type TEachTimelineList = {
       description: string;
       date: string;
       isDeleted?: boolean;
-    }
+    },
   ];
 };
 
@@ -33,12 +33,12 @@ export type TCaseOverview = {
   clientName: string;
   caseTitle: string;
   caseType: string;
-    // | 'Traffic_Violation'
-    // | 'License_Suspension'
-    // | 'Reckless_Driving'
-    // | 'Hit_and_Run'
-    // | 'Driving_without_license'
-    // | 'Parking_Violation';
+  // | 'Traffic_Violation'
+  // | 'License_Suspension'
+  // | 'Reckless_Driving'
+  // | 'Hit_and_Run'
+  // | 'Driving_without_license'
+  // | 'Parking_Violation';
   case_status:
     | 'In Bearbeitung'
     | 'Fall bei der Versicherung eingereicht'
@@ -46,13 +46,15 @@ export type TCaseOverview = {
     | 'Entscheidung der Versicherung noch ausstehend'
     | 'Vorschadenproblematik'
     | 'Ermittlungsakte wurde angefordert'
+    | 'Fragebogen ausstehend'
+    | 'Nachbesichtigung fehlt'
     | 'Versicherungsnehmer hat Schaden noch nicht gemeldet';
   coatDate?: string;
   note?: string;
   assetList_id?: Types.ObjectId;
   timeLine_id?: Types.ObjectId;
   vehicleNumber: string;
-  isMailSent?:boolean;
+  isMailSent?: boolean;
   isDeleted?: boolean;
 };
 
@@ -77,7 +79,11 @@ export interface CaseOverviewQuery {
   userId: string;
   page?: number;
   limit?: number;
-  caseStatus?: 'Letter_sent_to_insurance' | 'In_Progress' | 'Closed' | 'Pending';
+  caseStatus?:
+    | 'Letter_sent_to_insurance'
+    | 'In_Progress'
+    | 'Closed'
+    | 'Pending';
   vehicleNumber?: string;
 }
 
