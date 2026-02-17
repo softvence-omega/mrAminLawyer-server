@@ -1589,6 +1589,7 @@ const manageCase = async (
           new Types.ObjectId(payload.client_user_id),
           'New Case Created',
           `Dear ${payload.clientName}, a new case '${payload.caseTitle}' has been created for you.`,
+          'case_notification',
         );
       } else {
         // Update existing case
@@ -1654,6 +1655,7 @@ const manageCase = async (
             caseOverview.client_user_id,
             'Case Updated',
             `Dear ${caseOverview.clientName}, your case '${caseOverview.caseTitle}' has been updated.`,
+            'case_notification',
           );
         }
       }
@@ -1905,6 +1907,7 @@ const updateCase = async (
       caseOverview.client_user_id,
       'Case Updated',
       `Dear ${caseOverview.clientName}, your case '${caseOverview.caseTitle}' has been updated.`,
+      'case_notification',
     );
 
     // Fetch full case details with populated fields
