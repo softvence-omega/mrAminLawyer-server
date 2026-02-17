@@ -1507,6 +1507,14 @@ const manageCase = async (
         { $set: { assetList_id: assetListId } },
         { session },
       );
+
+      // Send push notification to admin (user_id who created the case)
+      await sendSingleNotification(
+        caseOverview.user_id,
+        'Asset Uploaded',
+        `Client ${caseOverview.clientName} has uploaded ${files.length} new asset(s) to case '${caseOverview.caseTitle}'.`,
+        'case_notification',
+      );
     } else if (userRole === 'admin') {
       // Admins can perform all operations
       if (!payload.caseOverviewId) {
