@@ -168,9 +168,18 @@ const setFCMToken = async (user_id: Types.ObjectId, fcmToken: string) => {
     },
     {
       $addToSet: { fcmTokens: fcmToken },
+      $unset: { fcmToken: 1 }, // Remove legacy single fcmToken field
     },
     { new: true },
   );
+
+  // Optional: Keep only the most recent tokens (e.g., last 10) to prevent bloating
+  if (result && result.fcmTokens && result.fcmTokens.length > 10) {
+    await UserModel.updateOne(
+      { _id: user_id },
+      { $set: { fcmTokens: result.fcmTokens.slice(-10) } },
+    );
+  }
 
   return result;
 };

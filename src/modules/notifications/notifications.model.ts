@@ -26,7 +26,11 @@ const notificationSchema = new Schema<TEachNotification>(
 const notificationListSchema = new Schema<TNotificationList>(
   {
     user_id: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
-    Profile_id: { type: Schema.Types.ObjectId, required: true, ref: 'Profile' },
+    Profile_id: {
+      type: Schema.Types.ObjectId,
+      required: false,
+      ref: 'Profile',
+    },
     oldNotificationCount: { type: Number, default: 0 },
     seenNotificationCount: { type: Number, default: 0 },
     newNotification: { type: Number, default: 0 },

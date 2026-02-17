@@ -41,7 +41,6 @@ export const sendSingleNotification = async (
           user_id: userId,
           Profile_id: profile?._id,
           seenNotificationCount: 0,
-          notificationList: [],
         },
         $inc: {
           oldNotificationCount: 1,
