@@ -1732,6 +1732,14 @@ const manageCase = async (
           },
           session,
         });
+
+        // Send push notification to client
+        await sendSingleNotification(
+          new Types.ObjectId(client_user_id),
+          'Timeline Updated',
+          `Admin has added a new timeline entry '${payload.timelineData.title}' to case '${caseTitle}'.`,
+          'case_notification',
+        );
       } else if (files && files.length > 0) {
         // Handle asset-only update for admins
         const client_user_id =
@@ -1763,6 +1771,14 @@ const manageCase = async (
           { _id: caseOverviewId },
           { $set: { assetList_id: assetListId } },
           { session },
+        );
+
+        // Send push notification to client
+        await sendSingleNotification(
+          new Types.ObjectId(client_user_id),
+          'Asset Uploaded',
+          `Admin has uploaded ${files.length} new asset(s) to case '${caseOverview?.caseTitle || 'your case'}'.`,
+          'case_notification',
         );
       }
     } else {
