@@ -1501,14 +1501,12 @@ const manageCase = async (
         });
       assetListId = newAssetListId;
 
-      // Update CaseOverview with assetListId if not already set
-      if (!caseOverview.assetList_id) {
-        await CaseOverviewModel.updateOne(
-          { _id: caseOverviewId },
-          { $set: { assetList_id: assetListId } },
-          { session },
-        );
-      }
+      // Update CaseOverview with assetListId and refresh updatedAt
+      await CaseOverviewModel.updateOne(
+        { _id: caseOverviewId },
+        { $set: { assetList_id: assetListId } },
+        { session },
+      );
     } else if (userRole === 'admin') {
       // Admins can perform all operations
       if (!payload.caseOverviewId) {
@@ -1642,13 +1640,12 @@ const manageCase = async (
             additionalData: { changes },
             session,
           });
-          if (!caseOverview.timeLine_id) {
-            await CaseOverviewModel.updateOne(
-              { _id: caseOverviewId },
-              { $set: { timeLine_id: timelineId } },
-              { session },
-            );
-          }
+          // Update CaseOverview with timelineId and refresh updatedAt
+          await CaseOverviewModel.updateOne(
+            { _id: caseOverviewId },
+            { $set: { timeLine_id: timelineId } },
+            { session },
+          );
 
           // Send push notification to client
           await sendSingleNotification(
@@ -1753,13 +1750,12 @@ const manageCase = async (
         // Update CaseOverview with assetListId if not already set
         const caseOverview =
           await CaseOverviewModel.findById(caseOverviewId).session(session);
-        if (!caseOverview?.assetList_id) {
-          await CaseOverviewModel.updateOne(
-            { _id: caseOverviewId },
-            { $set: { assetList_id: assetListId } },
-            { session },
-          );
-        }
+        // Update CaseOverview with assetListId and refresh updatedAt
+        await CaseOverviewModel.updateOne(
+          { _id: caseOverviewId },
+          { $set: { assetList_id: assetListId } },
+          { session },
+        );
       }
     } else {
       throw new Error('Invalid user role');
@@ -1893,14 +1889,12 @@ const updateCase = async (
       session,
     });
 
-    // Update CaseOverview with timelineId if not set
-    if (!caseOverview.timeLine_id) {
-      await CaseOverviewModel.updateOne(
-        { _id: new Types.ObjectId(caseOverviewId) },
-        { $set: { timeLine_id: timelineId } },
-        { session },
-      );
-    }
+    // Update CaseOverview with timelineId and refresh updatedAt
+    await CaseOverviewModel.updateOne(
+      { _id: new Types.ObjectId(caseOverviewId) },
+      { $set: { timeLine_id: timelineId } },
+      { session },
+    );
 
     // Send push notification to client
     await sendSingleNotification(
