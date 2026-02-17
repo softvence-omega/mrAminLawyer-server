@@ -11,9 +11,10 @@ export const sendSingleNotification = async (
   userId: Types.ObjectId,
   title: string,
   body: string,
+  notificationType: 'chat_message' | 'case_notification' = 'chat_message',
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    // Await MongoDB query to find user
+    // 1. Initial Checks
     const user = await UserModel.findById(userId).exec();
     if (!user) {
       return {
@@ -22,75 +23,82 @@ export const sendSingleNotification = async (
       };
     }
 
-    console.log('fcm tokens :::::: ', user.fcmTokens);
-
-    if (!user.notificationsEnabled) {
-      return {
-        success: false,
-        message: `Notifications are disabled for userId: ${userId}`,
-      };
-    }
-
-    if (!user.fcmTokens || user.fcmTokens.length === 0) {
-      return {
-        success: false,
-        message: `No FCM tokens found for userId: ${userId}`,
-      };
-    }
-
-    const sendPromises = user.fcmTokens.map((token) => {
-      const message = {
-        notification: {
-          title,
-          body,
-        },
-        token,
-      };
-      return admin.messaging().send(message);
-    });
-
-    // Await all notification sends
-    const results = await Promise.allSettled(sendPromises);
-
-    const successCount = results.filter((r) => r.status === 'fulfilled').length;
-    console.log(
-      `Successfully sent ${successCount}/${results.length} notifications`,
-    );
-
-    if (successCount === 0 && results.length > 0) {
-      return { success: false, message: 'Failed to send to all devices' };
-    }
-
-    // Get the user's profile (if applicable)
     const profile = await ProfileModel.findOne({ user_id: userId });
 
-    // 1. Create the Notification
+    // 2. Create in-app notification record (for the bell)
     const notification = await NotificationModel.create({
       user_id: userId,
       Profile_id: profile?._id,
-      notificationType: 'chat_message',
+      notificationType: notificationType,
       notificationDetail: body,
     });
 
-    // 2. Update or Create NotificationList
-    const list = await NotificationListModel.findOne({ user_id: userId });
-    if (list) {
-      list.notificationList.push(notification._id);
-      list.newNotification += 1;
-      await list.save();
-    } else {
-      await NotificationListModel.create({
-        user_id: userId,
-        Profile_id: profile?._id,
-        notificationList: [notification._id],
-        newNotification: 1,
+    // 3. Update or Create NotificationList (handles the "new notification" count for the bell)
+    await NotificationListModel.findOneAndUpdate(
+      { user_id: userId },
+      {
+        $setOnInsert: {
+          user_id: userId,
+          Profile_id: profile?._id,
+          seenNotificationCount: 0,
+        },
+        $inc: {
+          oldNotificationCount: 1,
+          newNotification: 1,
+        },
+        $push: {
+          notificationList: notification._id,
+        },
+      },
+      { upsert: true, new: true },
+    );
+
+    // 4. Handle Push Notifications (Multi-device)
+    if (
+      user.notificationsEnabled &&
+      user.fcmTokens &&
+      user.fcmTokens.length > 0
+    ) {
+      console.log(
+        `Sending push notifications to ${user.fcmTokens.length} devices for user: ${userId}`,
+      );
+
+      const sendPromises = user.fcmTokens.map((token) => {
+        const message = {
+          notification: { title, body },
+          token,
+        };
+        return admin.messaging().send(message);
       });
+
+      const results = await Promise.allSettled(sendPromises);
+      const successCount = results.filter(
+        (r) => r.status === 'fulfilled',
+      ).length;
+      console.log(
+        `Successfully sent ${successCount}/${results.length} push notifications`,
+      );
+
+      // Cleanup failed tokens if needed (already handled by sendMultiple, but good to have logic here if we want)
+      const failedTokens: string[] = [];
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          failedTokens.push(user.fcmTokens![index]);
+        }
+      });
+
+      if (failedTokens.length > 0) {
+        await UserModel.updateOne(
+          { _id: userId },
+          { $pull: { fcmTokens: { $in: failedTokens } } },
+        );
+      }
     }
 
-    return { success: true, message: 'Notification sent successfully' };
+    return { success: true, message: 'Notification (Bell & Push) processed' };
   } catch (error) {
-    console.error(`Error sending notification to userId: ${userId}`, error);
-    return { success: false, message: 'Failed to send notification' };
+    console.error(`Error processing notification for userId: ${userId}`, error);
+    return { success: false, message: 'Failed to process notification' };
   }
 };
 
